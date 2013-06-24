@@ -168,10 +168,9 @@ namespace GraphicsPractical3
             }
 
             // Technique Cycle
-            int techniques = 1;
             if (inputHandler.CheckKey(Keys.Space, false))
                 currentTechniqueNumber++;
-            if (currentTechniqueNumber >= techniques)
+            if (currentTechniqueNumber >= numberOfTechniques)
                 currentTechniqueNumber = 0;
 
             switch (currentTechniqueNumber)
