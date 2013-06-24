@@ -60,7 +60,7 @@ namespace GraphicsPractical3
             effect.Parameters["HasTexture"].SetValue(this.DiffuseTexture != null);
             //effect.Parameters["HasNormalMap"].SetValue(this.NormalMap != null);
             effect.Parameters["Light"].SetValue(this.Light);
-            effect.Parameters["Eye"].SetValue(this.Eye);
+            //effect.Parameters["Eye"].SetValue(this.Eye);
         }
     }
 }

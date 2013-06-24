@@ -18,6 +18,8 @@ namespace GraphicsPractical3
         private GraphicsDeviceManager graphics;
         private SpriteBatch spriteBatch;
         private FrameRateCounter frameRateCounter;
+        private InputHandler inputHandler;
+        private Effect effect;
 
         // Game objects and variables
         private Camera camera;
@@ -39,7 +41,7 @@ namespace GraphicsPractical3
             this.frameRateCounter = new FrameRateCounter(this);
             this.Components.Add(this.frameRateCounter);
         }
-
+        
         protected override void Initialize()
         {
             this.device = graphics.GraphicsDevice;
@@ -67,7 +69,7 @@ namespace GraphicsPractical3
             // Create a SpriteBatch object
             this.spriteBatch = new SpriteBatch(this.device);
             // Load the "Simple" effect
-            Effect effect = this.Content.Load<Effect>("Effects/Simple");
+            effect = this.Content.Load<Effect>("Effects/Simple");
             // Load the model and let it use the "Simple" effect
             this.model = this.Content.Load<Model>("Models/femalehead");
             this.model.Meshes[0].MeshParts[0].Effect = effect;
@@ -92,11 +94,10 @@ namespace GraphicsPractical3
 
             //apply changes for the model effect
             this.modelMaterial.SetEffectParameters(effect);
+
+            this.inputHandler = new InputHandler();
         }
 
-        /// <summary>
-        /// Sets up a 2 by 2 quad around the origin.
-        /// </summary>
         private void setupQuad()
         {
             float scale = 50.0f;
@@ -130,6 +131,33 @@ namespace GraphicsPractical3
         {
             float timeStep = (float)gameTime.ElapsedGameTime.TotalSeconds * 60.0f;
 
+            Matrix rotateLeft = Matrix.CreateRotationY(timeStep * 0.02f);
+            Matrix rotateRight = Matrix.CreateRotationY(-timeStep * 0.02f);
+            Matrix zoomIn = Matrix.CreateTranslation(0.05f * -Vector3.Normalize(timeStep * camera.Eye));
+            Matrix zoomOut = Matrix.CreateTranslation(0.05f * Vector3.Normalize(timeStep * camera.Eye));
+
+            if (inputHandler.CheckKey(Keys.Left))
+            {
+                camera.Eye = Vector3.Transform(camera.Eye, rotateLeft);
+            }
+
+            if (inputHandler.CheckKey(Keys.Right))
+            {
+                camera.Eye = Vector3.Transform(camera.Eye, rotateRight);
+            }
+
+            if (inputHandler.CheckKey(Keys.Up) && Vector3.Distance(Vector3.Zero, camera.Eye) > 10)
+            {
+                camera.Eye = Vector3.Transform(camera.Eye, zoomIn);
+            }
+
+            if (inputHandler.CheckKey(Keys.Down) && Vector3.Distance(Vector3.Zero, camera.Eye) < 100)
+            {
+                camera.Eye = Vector3.Transform(camera.Eye, zoomOut);
+            }
+
+            camera.SetEffectParameters(effect);
+
             // Update the window title
             this.Window.Title = "XNA Renderer | FPS: " + this.frameRateCounter.FrameRate;
 
@@ -143,7 +171,6 @@ namespace GraphicsPractical3
 
             // Get the model's only mesh
             ModelMesh mesh = this.model.Meshes[0];
-            Effect effect = mesh.Effects[0];
 
             // Set the effect parameters
             effect.CurrentTechnique = effect.Techniques["Simple"];

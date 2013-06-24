@@ -7,7 +7,7 @@
 // Top level variables can and have to be set at runtime
 
 // Positions of the lightsource and the camera
-float3 Light, Eye;
+float3 Light, CameraPosition;
 // Matrices for 3D perspective projection 
 float4x4 View, Projection, World, WorldNormal;
 // Light Colors
@@ -92,7 +92,7 @@ float4 Lighting(VertexShaderOutput input)
 	float3 lightDir = normalize(Light - input.PixelPosition);
 	
 	//calculate the vector between the eye and the .....
-	float3 viewDir = normalize(Eye - input.PixelPosition);
+	float3 viewDir = normalize(CameraPosition - input.PixelPosition);
 	//calculate the halfway vector
 	float3 h = normalize(viewDir + lightDir);	
 	
