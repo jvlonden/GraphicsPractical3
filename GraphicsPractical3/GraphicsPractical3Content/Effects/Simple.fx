@@ -26,9 +26,6 @@ bool HasTexture;
 
 //---------------------------------- Input / Output structures ----------------------------------
 
-// Each member of the struct has to be given a "semantic", to indicate what kind of data should go in
-// here and how it should be treated. Read more about the POSITION0 and the many other semantics in 
-// the MSDN library
 struct VertexShaderInput
 {
 	float4 Position3D : POSITION0;
@@ -36,14 +33,6 @@ struct VertexShaderInput
 	float2 TexCoords : TEXCOORD0;
 };
 
-// The output of the vertex shader. After being passed through the interpolator/rasterizer it is also 
-// the input of the pixel shader. 
-// Note 1: The values that you pass into this struct in the vertex shader are not the same as what 
-// you get as input for the pixel shader. A vertex shader has a single vertex as input, the pixel	
-// shader has 3 vertices as input, and lets you determine the color of each pixel in the triangle 
-// defined by these three vertices. Therefor, all the values in the struct that you get as input for 
-// the pixel shaders have been linearly interpolated between there three vertices!
-// Note 2: You cannot use the data with the POSITION0 semantic in the pixel shader.
 struct VertexShaderOutput
 {
 	float4 Position2D : POSITION0;

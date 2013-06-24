@@ -17,12 +17,16 @@ namespace GraphicsPractical3
         private GraphicsDevice device;
         private GraphicsDeviceManager graphics;
         private SpriteBatch spriteBatch;
-        private FrameRateCounter frameRateCounter;
-        private InputHandler inputHandler;
+        private FrameRateCounter frameRateCounter;        
+
+        // Effects
         private Effect effect;
+        private int numberOfTechniques;
+        private int currentTechniqueNumber;
 
         // Game objects and variables
         private Camera camera;
+        private InputHandler inputHandler;
 
         // Model
         private Model model;
@@ -70,6 +74,8 @@ namespace GraphicsPractical3
             this.spriteBatch = new SpriteBatch(this.device);
             // Load the "Simple" effect
             effect = this.Content.Load<Effect>("Effects/Simple");
+            currentTechniqueNumber = 0;
+            numberOfTechniques = 1;
             // Load the model and let it use the "Simple" effect
             this.model = this.Content.Load<Model>("Models/femalehead");
             this.model.Meshes[0].MeshParts[0].Effect = effect;
@@ -87,7 +93,6 @@ namespace GraphicsPractical3
             this.modelMaterial.AmbientIntensity = 0.2f;
 
             //specular light settings
-            this.modelMaterial.Eye = this.camera.Eye;
             this.modelMaterial.SpecularColor = Color.White;
             this.modelMaterial.SpecularIntensity = 2.0f;
             this.modelMaterial.SpecularPower = 25.0f;
@@ -127,14 +132,20 @@ namespace GraphicsPractical3
             this.quadTransform = Matrix.CreateScale(scale) * Matrix.CreateTranslation(0.0f, -7.5f, 0.0f);
         }
 
-        protected override void Update(GameTime gameTime)
+        //----------------------------------------------------------------------------
+        // Name: HandleInput()
+        // Desc: Handles the Input
+        //----------------------------------------------------------------------------
+        private void HandleInput(float timeStep)
         {
-            float timeStep = (float)gameTime.ElapsedGameTime.TotalSeconds * 60.0f;
+            // Camera Movement
+            float rotationScale = 0.02f;
+            float zoomScale = 0.05f;
 
-            Matrix rotateLeft = Matrix.CreateRotationY(timeStep * 0.02f);
-            Matrix rotateRight = Matrix.CreateRotationY(-timeStep * 0.02f);
-            Matrix zoomIn = Matrix.CreateTranslation(0.05f * -Vector3.Normalize(timeStep * camera.Eye));
-            Matrix zoomOut = Matrix.CreateTranslation(0.05f * Vector3.Normalize(timeStep * camera.Eye));
+            Matrix rotateLeft = Matrix.CreateRotationY(timeStep * rotationScale);
+            Matrix rotateRight = Matrix.CreateRotationY(-timeStep * rotationScale);
+            Matrix zoomIn = Matrix.CreateTranslation(zoomScale * -Vector3.Normalize(timeStep * camera.Eye));
+            Matrix zoomOut = Matrix.CreateTranslation(zoomScale * Vector3.Normalize(timeStep * camera.Eye));
 
             if (inputHandler.CheckKey(Keys.Left))
             {
@@ -156,24 +167,29 @@ namespace GraphicsPractical3
                 camera.Eye = Vector3.Transform(camera.Eye, zoomOut);
             }
 
-            camera.SetEffectParameters(effect);
+            // Technique Cycle
+            int techniques = 1;
+            if (inputHandler.CheckKey(Keys.Space, false))
+                currentTechniqueNumber++;
+            if (currentTechniqueNumber >= techniques)
+                currentTechniqueNumber = 0;
 
-            // Update the window title
-            this.Window.Title = "XNA Renderer | FPS: " + this.frameRateCounter.FrameRate;
-
-            base.Update(gameTime);
+            switch (currentTechniqueNumber)
+            { 
+                case 0:
+                    effect.CurrentTechnique = effect.Techniques["Simple"];
+                    break;
+            }
         }
 
-        protected override void Draw(GameTime gameTime)
+        //----------------------------------------------------------------------------
+        // Name: DrawModel()
+        // Desc: Draws the Model
+        //----------------------------------------------------------------------------
+        private void DrawModel()
         {
-            // Clear the screen in a predetermined color and clear the depth buffer
-            this.device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.DeepSkyBlue, 1.0f, 0);
-
             // Get the model's only mesh
             ModelMesh mesh = this.model.Meshes[0];
-
-            // Set the effect parameters
-            effect.CurrentTechnique = effect.Techniques["Simple"];
 
             // Matrices for 3D perspective projection
             this.camera.SetEffectParameters(effect);
@@ -188,7 +204,14 @@ namespace GraphicsPractical3
 
             // Draw the model
             mesh.Draw();
+        }
 
+        //----------------------------------------------------------------------------
+        // Name: DrawTexturedQuad()
+        // Desc: Draws the Textured Quad
+        //----------------------------------------------------------------------------
+        private void DrawTexturedQuad()
+        {
             // Pass the texture to the shader and let it know it has to use it
             effect.Parameters["DiffuseTexture"].SetValue(Content.Load<Texture>("Textures/CobblestonesDiffuse"));
             effect.Parameters["HasTexture"].SetValue(true);
@@ -210,6 +233,27 @@ namespace GraphicsPractical3
                     0,
                     quadIndices.Length / 3);
             }
+        }
+
+        protected override void Update(GameTime gameTime)
+        {
+            float timeStep = (float)gameTime.ElapsedGameTime.TotalSeconds * 60.0f;
+
+            HandleInput(timeStep);
+            
+            // Update the window title
+            this.Window.Title = "XNA Renderer | FPS: " + this.frameRateCounter.FrameRate;
+
+            base.Update(gameTime);
+        }        
+
+        protected override void Draw(GameTime gameTime)
+        {
+            // Clear the screen in a predetermined color and clear the depth buffer
+            this.device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.DeepSkyBlue, 1.0f, 0);
+
+            DrawModel();
+            DrawTexturedQuad();            
 
             base.Draw(gameTime);
         }
