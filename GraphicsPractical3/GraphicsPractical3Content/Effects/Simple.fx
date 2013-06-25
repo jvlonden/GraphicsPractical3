@@ -8,11 +8,11 @@
 // Top level variables can and have to be set at runtime
 
 // Positions of the lightsource and the camera
-float3 Light,SpotlightPos, CameraPosition;
+float3 Light,SpotlightPos1, CameraPosition, direction1;
 // Matrices for 3D perspective projection 
 float4x4 View, Projection, World, WorldNormal;
 // Light Colors
-float4 DiffuseColor, AmbientColor, SpecularColor;
+float4 DiffuseColor, AmbientColor, SpecularColor,color1;
 // Other lighting values
 float AmbientIntensity, SpecularPower, SpecularIntensity;
 // Cook-Torrance
@@ -126,7 +126,7 @@ float4 Lighting(VertexShaderOutput input)
 	return  ambient + diffuse + specular;
 }
 
-float4 LightingSpotlight(VertexShaderOutput input)
+float4 LightingSpotlight(VertexShaderOutput input, float3 SpotlightPos, float3 direction, float4 color )//function for the pixel shader(spotlights)
 {
     //calculate the vector between the lightpoint and the position of the pixel
 	float3 lightDir = normalize(SpotlightPos - input.PixelPosition);
@@ -135,7 +135,6 @@ float4 LightingSpotlight(VertexShaderOutput input)
 	float3 viewDir = normalize(CameraPosition - input.PixelPosition);
     
     float3 dirToLight = normalize(SpotlightPos - CameraPosition);
-    float3 direction = float3(0,-1,-0.5);
     float coneDot = dot(-lightDir, direction);
     
     float diffuse;
@@ -155,7 +154,7 @@ float4 LightingSpotlight(VertexShaderOutput input)
 	//calculate the ambient light
 	ambient = AmbientColor * AmbientIntensity;
     
-    result = ambient + DiffuseColor * diffuse;
+    result = ambient + color * diffuse;
 	
     
     }
@@ -171,15 +170,18 @@ float4 LightingSpotlight(VertexShaderOutput input)
     
     //combine all the lighting
 
-    result = ambient + DiffuseColor * diffuse;
-    result *= fadeValue;        
+    result = ambient + color * diffuse;
+    result *= fadeValue;
+    
+
+    
+        
     }
-    else
-    {
-        diffuse = 0;
-        ambient = 0;
-        result = 0;
-    }
+    
+    
+	
+
+
 	return  result;
 
 }
@@ -283,7 +285,7 @@ float4 SpotlightPixelShader(VertexShaderOutput input) : COLOR0
 	
 	float4 color;
 	if(true)
-		color = LightingSpotlight(input);
+		color = LightingSpotlight(input,SpotlightPos1, direction1,color1);
 	else
 		color = tex2D(DiffuseTextureSampler, input.TexCoords / textureScale);
 

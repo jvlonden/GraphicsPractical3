@@ -79,7 +79,7 @@ namespace GraphicsPractical3
             this.spriteBatch = new SpriteBatch(this.device);
             // Load the "Simple" effect
             effect = this.Content.Load<Effect>("Effects/Simple");
-            currentTechniqueNumber = 0;
+            currentTechniqueNumber = 1;
             numberOfTechniques = 3;
             // Load the model and let it use the "Simple" effect
             this.model = this.Content.Load<Model>("Models/femalehead");
@@ -91,8 +91,10 @@ namespace GraphicsPractical3
             this.modelMaterial.DiffuseColor = Color.Blue;
             //set the position of the light   
             this.modelMaterial.Light = new Vector3(50, 50, 50);
-            //set the spotlights position and angles
-            this.modelMaterial.SpotlightPos = new Vector3(0,50,30);
+            //set the spotlights parameters
+            this.modelMaterial.SpotlightPos = new Vector3(20,20,30);
+            this.modelMaterial.spotColor = Color.AliceBlue;
+            this.modelMaterial.spotDirection = new Vector3(-0.5f, -1, -0.5f);
 
             //Multiple Lights creation 
             NumberOfLights = 10;
