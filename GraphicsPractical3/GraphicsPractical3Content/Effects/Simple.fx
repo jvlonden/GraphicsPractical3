@@ -283,11 +283,9 @@ float4 SpotlightPixelShader(VertexShaderOutput input) : COLOR0
 	//scale of the textures
 	float textureScale = 0.5;
 	
-	float4 color;
-	if(true)
-		color = LightingSpotlight(input,SpotlightPos1, direction1,color1);
-	else
-		color = tex2D(DiffuseTextureSampler, input.TexCoords / textureScale);
+
+    float4 color = LightingSpotlight(input,SpotlightPos1, direction1,color1);
+
 
 	return color;
 }

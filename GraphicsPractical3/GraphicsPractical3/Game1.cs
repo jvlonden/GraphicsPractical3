@@ -88,7 +88,7 @@ namespace GraphicsPractical3
             this.setupQuad();
 
             //set the color of the object
-            this.modelMaterial.DiffuseColor = Color.Blue;
+            this.modelMaterial.DiffuseColor = Color.Gold;
             //set the position of the light   
             this.modelMaterial.Light = new Vector3(50, 50, 50);
             //set the spotlights parameters
@@ -104,7 +104,7 @@ namespace GraphicsPractical3
 
 
             //ambient light color
-            this.modelMaterial.AmbientColor = Color.Blue;
+            this.modelMaterial.AmbientColor = Color.Gold;
             //ambient light intensity
             this.modelMaterial.AmbientIntensity = 0.2f;
 
