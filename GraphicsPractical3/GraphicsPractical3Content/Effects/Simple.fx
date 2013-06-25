@@ -48,16 +48,8 @@ struct VertexShaderOutput
 
 //------------------------------------------ Functions ------------------------------------------
 
-float4 Lighting(VertexShaderOutput input, float3 lightPos)
+float CookTorrance(float3 e, float3 l, float3 n, float3 h)
 {
-	float3 n = input.Normal;
-	// the vector between the lightpoint and the position of the pixel
-	float3 l = normalize(lightPos - input.PixelPosition);	
-	// the vector between the eye and the .....
-	float3 e = normalize(CameraPosition - input.PixelPosition);
-	// the halfway vector
-	float3 h = normalize(e + l);	
-	
 	// some variables to make the final formulas clearer
 	float HdotN = dot(h, n);
 	float EdotN = dot(e, n);
@@ -77,16 +69,27 @@ float4 Lighting(VertexShaderOutput input, float3 lightPos)
 			  min(2*HdotN*LdotN/EdotH,
 			  1));
 	// the specular light	  
-	float CookTorrance = D*F*G/EdotN;
+	return D*F*G/EdotN;
+}
+
+float4 Lighting(VertexShaderOutput input, float3 lightPos)
+{
+	float3 n = input.Normal;
+	// the vector between the lightpoint and the position of the pixel
+	float3 l = normalize(lightPos - input.PixelPosition);	
+	// the vector between the eye and the .....
+	float3 e = normalize(CameraPosition - input.PixelPosition);
+	// the halfway vector
+	float3 h = normalize(e + l);	
 	
 	// the cosine of the angle between the normal and the directional light and clamp it between 0 and 1;
-	float4 diffuse = DiffuseColor * saturate(LdotN);
+	float4 diffuse = DiffuseColor * saturate(dot(l, n));
 	
 	// the ambient light
 	float4 ambient = AmbientColor * AmbientIntensity;
 	
 	// the specula light
-	float4 specular = SpecularColor * CookTorrance * SpecularIntensity;
+	float4 specular = SpecularColor * CookTorrance(e, l, n, h) * SpecularIntensity;
 	
 	// all the lighting
 	return  ambient + diffuse + specular;
@@ -94,27 +97,31 @@ float4 Lighting(VertexShaderOutput input, float3 lightPos)
 
 float4 LightingSpotlight(VertexShaderOutput input, float3 SpotlightPos, float3 SpotlightDirection, float4 SpotlightColor, float4 ObjectColor )
 {
-	//calculate the vector between the lightpoint and the position of the pixel
+	// the vector between the lightpoint and the position of the pixel
 	float3 lightDir = normalize(SpotlightPos - input.PixelPosition);	
+	float3 n = input.Normal;
+	// the vector between the eye and the .....
+	float3 e = normalize(CameraPosition - input.PixelPosition);
+	// the halfway vector
+	float3 h = normalize(e + lightDir);
 
     float coneDot = dot(-lightDir, SpotlightDirection);
     
     float4 diffuse = (SpotlightColor + ObjectColor) / 2 * saturate(dot(input.Normal, lightDir));
-
-    float4 result;
+	float4 specular = SpotlightColor * CookTorrance(e, lightDir, n, h) * SpecularIntensity;
     
     float alpha, beta;
     alpha = 60.0;
     beta = 55.0;
     
     if(coneDot > radians(alpha))
-		return diffuse;
+		return diffuse + specular;
 
     else if(coneDot < radians(alpha) && coneDot > radians(beta))
     {    
 		float fadeValue = (coneDot - radians(beta)) / (radians(alpha) - radians(beta));
 
-		return diffuse * fadeValue;
+		return (diffuse + specular) * fadeValue;
 	}
 	else
 		return float4(0.0f, 0.0f, 0.0f, 1.0f);
