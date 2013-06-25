@@ -333,5 +333,5 @@ technique MultipleLightsSources
 	{
 		VertexShader = compile vs_2_0 MLSVertexShader();
 		PixelShader  = compile ps_2_0 MLSPixelShader();
-	}
+	} 
 }
