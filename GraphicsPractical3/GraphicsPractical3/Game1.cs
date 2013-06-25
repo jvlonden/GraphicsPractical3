@@ -164,9 +164,14 @@ namespace GraphicsPractical3
         {            
             for (int i = 0; i < NumberOfLights; i++)
             {
-                MLS[i] = new Vector3(i * 5 + 5, i * 5 + 5, i * 5 + 5);
-                MLSDiffuseColors[i] = new Vector3(i * 25 + 5, i * 5 + 25, i * 5 + 25);
+
+                MLSDiffuseColors[i] = new Vector3(0, 10, 0);
             }
+            MLS[1] = new Vector3(5, 70, 5);
+            MLS[2] = new Vector3(-5, 70, 5);
+            MLS[3] = new Vector3(5, 70, -5);
+            MLS[4] = new Vector3(-5, 70, -5);
+
             this.modelMaterial.MLS = MLS;
             this.modelMaterial.MLSDiffuseColors = MLSDiffuseColors;
         }

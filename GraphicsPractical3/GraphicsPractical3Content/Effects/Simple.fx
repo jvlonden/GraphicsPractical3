@@ -1,7 +1,7 @@
 //------------------------------------------- Defines -------------------------------------------
 
 #define Pi 3.14159265
-#define Num_Lights 10
+#define Num_Lights 4
 
 //------------------------------------- Top Level Variables -------------------------------------
 
@@ -190,23 +190,17 @@ float4 MultipleLighting(VertexShaderOutput input)
 {
 	float4 color[Num_Lights], diffuse[Num_Lights];
 	
-	//calculate the vector between the lightpoint and the position of the pixel	
+
 	
 	float4 outputColor = float4(0,0,0,0);
 	[loop]
-	for(uint i = 0; i < 0; i++)
+	for(uint i = 0; i < Num_Lights; i++)
 	{
-		color[i].xyz = normalize(MLS[i].xyz - input.PixelPosition.xyz);
-		diffuse[i].xyz = saturate(mul(input.Normal, color[i]));
-		color[i].xyz = MLSDiffuseColors[i] * diffuse[i];
-		color[i].w = 1.0;
-		outputColor = outputColor + color[i];
+		outputColor = outputColor + LightingSpotlight (input, MLS[i], float3(0,-1,0), MLSDiffuseColors[i]);
 	}
 
-	//calculate the ambient light
-	float4 ambient = AmbientColor * AmbientIntensity;
-	//combine all the lighting
-	return  ambient + outputColor;
+
+	return  outputColor;
 }
 
 //---------------------------------------- Technique: Simple ----------------------------------------
