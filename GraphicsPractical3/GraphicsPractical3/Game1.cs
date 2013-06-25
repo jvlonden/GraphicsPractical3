@@ -96,15 +96,15 @@ namespace GraphicsPractical3
 
             //specular light settings
             this.modelMaterial.SpecularColor = Color.White;
-            this.modelMaterial.SpecularIntensity = 2.0f;
-            this.modelMaterial.SpecularPower = 25.0f;
+            this.modelMaterial.SpecularIntensity = 10.0f;
+            this.modelMaterial.Roughness = 05f;
+            this.modelMaterial.ReflectionCoefficient = 1.42f;
 
             //apply changes for the model effect
             this.modelMaterial.SetEffectParameters(effect);
 
             this.inputHandler = new InputHandler();
         }
-
         private void setupQuad()
         {
             float scale = 50.0f;

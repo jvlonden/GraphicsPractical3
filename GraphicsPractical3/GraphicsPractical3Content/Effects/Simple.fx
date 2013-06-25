@@ -14,6 +14,8 @@ float4x4 View, Projection, World, WorldNormal;
 float4 DiffuseColor, AmbientColor, SpecularColor;
 // Other lighting values
 float AmbientIntensity, SpecularPower, SpecularIntensity;
+// Cook-Torrance
+float Roughness, ReflectionCoefficient;
 
 Texture DiffuseTexture;
 sampler DiffuseTextureSampler = sampler_state 
@@ -77,25 +79,46 @@ float4 ProceduralColor(VertexShaderOutput input)
 
 float4 Lighting(VertexShaderOutput input)
 {
-	//calculate the vector between the lightpoint and the position of the pixel
-	float3 lightDir = normalize(Light - input.PixelPosition);
+	float3 n = input.Normal;
+	// the vector between the lightpoint and the position of the pixel
+	float3 l = normalize(Light - input.PixelPosition);	
+	// the vector between the eye and the .....
+	float3 e = normalize(CameraPosition - input.PixelPosition);
+	// the halfway vector
+	float3 h = normalize(e + l);	
 	
-	//calculate the vector between the eye and the .....
-	float3 viewDir = normalize(CameraPosition - input.PixelPosition);
-	//calculate the halfway vector
-	float3 h = normalize(viewDir + lightDir);	
+	// some variables to make the final formulas clearer
+	float HdotN = dot(h, n);
+	float EdotN = dot(e, n);
+	float EdotH = dot(e, h);
+	float LdotN = dot(l, n);
+	float a = acos(HdotN);
+	float tan2a = pow(tan(a), 2);
+	float cos4a = pow(HdotN, 4);
+	float m2 = Roughness * Roughness;
 	
-	//calculate the cosine of the angle between the normal and the directional light and clamp it between 0 and 1;
-	float diffuse = saturate(mul(input.Normal, lightDir));
+	// distribution
+	float D = exp(-tan2a/m2)/(Pi * m2 * cos4a);	
+	// reflection
+	float F = ReflectionCoefficient + (1 - ReflectionCoefficient)*pow((1  - EdotN), 5);
+	// attenuation
+	float G = min(2*HdotN*EdotN/EdotH,
+			  min(2*HdotN*LdotN/EdotH,
+			  1));
+	// the specular light	  
+	float CookTorrance = D*F*G/EdotN;
 	
-	//calculate the ambient light
+	// the cosine of the angle between the normal and the directional light and clamp it between 0 and 1;
+	float4 diffuse = DiffuseColor * saturate(LdotN);
+	
+	// the ambient light
 	float4 ambient = AmbientColor * AmbientIntensity;
 	
-	//calculate the intensity of the specular light at a given point
-	float4 specular = pow(saturate(mul(input.Normal, h)), SpecularPower) * SpecularIntensity;
+	// the specula light
+	float4 specular = SpecularColor * CookTorrance * SpecularIntensity;
 	
-	//combine all the lighting
-	return  ambient + DiffuseColor * diffuse + SpecularColor * specular;
+	// all the lighting
+	return  ambient + diffuse + specular;
 }
 
 float4 LightingSpotlight(VertexShaderOutput input)
@@ -156,8 +179,6 @@ float4 LightingSpotlight(VertexShaderOutput input)
         ambient = 0;
         result = 0;
     }
-
-    
     
     
 	

@@ -31,8 +31,6 @@ namespace GraphicsPractical3
         public Color SpecularColor;
         // The intensity factor of the specular highlight, controls it's size
         public float SpecularIntensity;
-        // The power term of the specular highlight, controls it's smoothness
-        public float SpecularPower;
         // Special surface color, use normals as color
         public bool NormalColoring;
         // Special surface color, procedural colors
@@ -41,7 +39,12 @@ namespace GraphicsPractical3
         public Vector3 Light;
         //Position of the Spotlight
         public Vector3 SpotlightPos;
-
+        // Position of the eye
+        public Vector3 Eye;
+        // Roughness of the object
+        public float Roughness;
+        // Reflection Coefficient for Cook-Torrance
+        public float ReflectionCoefficient;
 
         // Using this function requires all these elements to be present as top-level variables in the shader code. Comment out the ones that you don't use
         public void SetEffectParameters(Effect effect)
@@ -54,7 +57,6 @@ namespace GraphicsPractical3
             //effect.Parameters["DisplacementFactor"].SetValue(this.DisplacementFactor);
             effect.Parameters["SpecularColor"].SetValue(this.SpecularColor.ToVector4());
             effect.Parameters["SpecularIntensity"].SetValue(this.SpecularIntensity);
-            effect.Parameters["SpecularPower"].SetValue(this.SpecularPower);
             //effect.Parameters["NormalColoring"].SetValue(this.NormalColoring);
             //effect.Parameters["ProceduralColoring"].SetValue(this.ProceduralColoring);
             effect.Parameters["HasTexture"].SetValue(this.DiffuseTexture != null);
@@ -62,6 +64,8 @@ namespace GraphicsPractical3
             effect.Parameters["Light"].SetValue(this.Light);
             //effect.Parameters["Eye"].SetValue(this.Eye);
             effect.Parameters["SpotlightPos"].SetValue(this.SpotlightPos);
+            effect.Parameters["Roughness"].SetValue(this.Roughness);
+            effect.Parameters["ReflectionCoefficient"].SetValue(this.ReflectionCoefficient);
         }
     }
 }
