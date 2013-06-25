@@ -85,7 +85,7 @@ namespace GraphicsPractical3
             // Load the "Simple" effect
             effect = this.Content.Load<Effect>("Effects/Simple");
             currentTechniqueNumber = 1;
-            numberOfTechniques = 3;
+            numberOfTechniques = 4;
 
             // Load the model and let it use the "Simple" effect
             this.model = this.Content.Load<Model>("Models/femalehead");
@@ -167,10 +167,10 @@ namespace GraphicsPractical3
 
                 MLSDiffuseColors[i] = new Vector3(0, 10, 0);
             }
-            MLS[1] = new Vector3(5, 70, 5);
-            MLS[2] = new Vector3(-5, 70, 5);
-            MLS[3] = new Vector3(5, 70, -5);
-            MLS[4] = new Vector3(-5, 70, -5);
+            MLS[1] = new Vector3(10, 70, 10);
+            MLS[2] = new Vector3(-10, 70, 10);
+            MLS[3] = new Vector3(10, 70, -10);
+            MLS[4] = new Vector3(-10, 70, -10);
 
             this.modelMaterial.MLS = MLS;
             this.modelMaterial.MLSDiffuseColors = MLSDiffuseColors;
@@ -231,7 +231,9 @@ namespace GraphicsPractical3
                     break;
                 case 2:
                     effect.CurrentTechnique = effect.Techniques["MultipleLightsSources"];
-
+                    break;
+                case 3:
+                    effect.CurrentTechnique = effect.Techniques["GrayScale"];
                     break;
             }
         }

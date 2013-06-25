@@ -333,5 +333,58 @@ technique MultipleLightsSources
 	{
 		VertexShader = compile vs_2_0 MLSVertexShader();
 		PixelShader  = compile ps_2_0 MLSPixelShader();
+<<<<<<< HEAD
 	} 
 }
+=======
+	}
+}
+
+//---------------------------------------- Technique: GrayScale ----------------------------------------
+
+VertexShaderOutput GrayScaleVertexShader(VertexShaderInput input)
+{
+	// Allocate an empty output struct
+	VertexShaderOutput output = (VertexShaderOutput)0;
+
+	// Do the matrix multiplications for perspective projection and the world transform
+	float4 worldPosition = mul(input.Position3D, World);
+    float4 viewPosition  = mul(worldPosition, View);
+	output.Position2D    = mul(viewPosition, Projection);
+	
+	output.TexCoords = input.TexCoords;
+	
+	//perform the transposed inverse world transform on the normals
+	output.Normal		 = normalize(mul(input.Normal, (float3x3)WorldNormal));
+	
+	//pass along the position data to the output (for pixel shader use)
+	output.PixelPosition = worldPosition;
+	
+	return output;
+}
+
+float4 GrayScalePixelShader(VertexShaderOutput input) : COLOR0
+{
+	//scale of the textures
+	float textureScale = 0.5;
+	
+	float4 color;
+	if(!HasTexture)
+		color = Lighting(input);
+	else
+		color = tex2D(DiffuseTextureSampler, input.TexCoords / textureScale);
+	
+	
+	
+	return dot(color, float3(0.3, 0.59, 0.11));
+}
+
+technique GrayScale
+{
+	pass Pass0
+	{
+		VertexShader = compile vs_3_0 GrayScaleVertexShader();
+		PixelShader  = compile ps_3_0 GrayScalePixelShader();
+	}
+}
+>>>>>>> GrayScale
