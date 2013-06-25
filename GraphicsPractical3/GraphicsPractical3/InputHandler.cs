@@ -4,27 +4,32 @@ namespace GraphicsPractical3
 {
     class InputHandler
     {
-        private KeyboardState keyboard;
-        private KeyboardState keyboardPrev;
+        private KeyboardState oldState, newState;
 
         public InputHandler()
         {
-            keyboard = new KeyboardState();
-            keyboardPrev = new KeyboardState();
+            oldState = Keyboard.GetState();
         }
 
         public bool CheckKey(Keys key, bool hold = true)
         {
-            keyboardPrev = keyboard;
-            keyboard = Keyboard.GetState();
-
-            if (hold == true && keyboard.IsKeyDown(key))
+            if (hold)
+            { 
+                if(newState.IsKeyDown(key))
                     return true;
-
-            else if (!keyboardPrev.IsKeyDown(key) && keyboard.IsKeyDown(key))
-                return true;
-
+            }
+            else 
+            {
+                if (newState.IsKeyDown(key))
+                    if(oldState.IsKeyUp(key))
+                        return true;
+            }
             return false;
-        }        
+        }
+        public void UpdateStates()
+        {
+            oldState = newState;
+            newState = Keyboard.GetState();
+        }
     }
 }

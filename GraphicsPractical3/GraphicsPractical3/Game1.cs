@@ -167,6 +167,7 @@ namespace GraphicsPractical3
         //----------------------------------------------------------------------------
         private void HandleInput(float timeStep)
         {
+            inputHandler.UpdateStates();
             // Camera Movement
             float rotationScale = 0.02f;
             float zoomScale = 0.05f;
@@ -281,8 +282,6 @@ namespace GraphicsPractical3
             
             // Update the window title
             this.Window.Title = "XNA Renderer | FPS: " + this.frameRateCounter.FrameRate;
-
-
 
             base.Update(gameTime);
 
