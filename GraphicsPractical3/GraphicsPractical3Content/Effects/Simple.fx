@@ -6,11 +6,11 @@
 //------------------------------------- Top Level Variables -------------------------------------
 
 // Positions of the lightsource and the camera
-float3 Light, SpotlightPos1, CameraPosition, direction1;
+float3 Light, SpotlightPos1, CameraPosition, SpotDirection1;
 // Matrices for 3D perspective projection 
 float4x4 View, Projection, World, WorldNormal;
 // Light Colors
-float4 DiffuseColor, AmbientColor, SpecularColor,color1;
+float4 DiffuseColor, AmbientColor, SpecularColor, SpotColor1;
 // Other lighting values
 float AmbientIntensity, SpecularPower, SpecularIntensity;
 // Cook-Torrance
@@ -48,11 +48,11 @@ struct VertexShaderOutput
 
 //------------------------------------------ Functions ------------------------------------------
 
-float4 Lighting(VertexShaderOutput input)
+float4 Lighting(VertexShaderOutput input, float3 lightPos)
 {
 	float3 n = input.Normal;
 	// the vector between the lightpoint and the position of the pixel
-	float3 l = normalize(Light - input.PixelPosition);	
+	float3 l = normalize(lightPos - input.PixelPosition);	
 	// the vector between the eye and the .....
 	float3 e = normalize(CameraPosition - input.PixelPosition);
 	// the halfway vector
@@ -92,49 +92,32 @@ float4 Lighting(VertexShaderOutput input)
 	return  ambient + diffuse + specular;
 }
 
-float4 LightingSpotlight(VertexShaderOutput input, float3 SpotlightPos, float3 direction, float4 color )//function for the pixel shader(spotlights)
+float4 LightingSpotlight(VertexShaderOutput input, float3 SpotlightPos, float3 SpotlightDirection, float4 SpotlightColor, float4 ObjectColor )
 {
-    //calculate the vector between the lightpoint and the position of the pixel
-	float3 lightDir = normalize(SpotlightPos - input.PixelPosition);
-	
-	//calculate the vector between the eye and the .....
-	float3 viewDir = normalize(CameraPosition - input.PixelPosition);
+	//calculate the vector between the lightpoint and the position of the pixel
+	float3 lightDir = normalize(SpotlightPos - input.PixelPosition);	
+
+    float coneDot = dot(-lightDir, SpotlightDirection);
     
-    float3 dirToLight = normalize(SpotlightPos - CameraPosition);
-    float coneDot = dot(-lightDir, direction);
-    
-    float diffuse;
-    float4 result, ambient;
+    float4 diffuse = (SpotlightColor + ObjectColor) / 2 * saturate(dot(input.Normal, lightDir));
+
+    float4 result;
     
     float alpha, beta;
     alpha = 60.0;
     beta = 55.0;
     
     if(coneDot > radians(alpha))
-    {
-		//calculate the cosine of the angle between the normal and the directional light and clamp it between 0 and 1;
-		diffuse = saturate(mul(input.Normal, lightDir));
-	
-		//calculate the ambient light
-		ambient = color * AmbientIntensity;
-    
-		result = ambient + diffuse;
-    }
+		return diffuse;
+
     else if(coneDot < radians(alpha) && coneDot > radians(beta))
     {    
 		float fadeValue = (coneDot - radians(beta)) / (radians(alpha) - radians(beta));
-		//calculate the cosine of the angle between the normal and the directional light and clamp it between 0 and 1;
-		diffuse = saturate(mul(input.Normal, lightDir));
-	
-		//calculate the ambient light
-		ambient = color * AmbientIntensity;
-    
-		//combine all the lighting
-		result = ambient + diffuse;
-		result *= fadeValue;        
-    }
 
-	return  result;
+		return diffuse * fadeValue;
+	}
+	else
+		return float4(0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 float4 MultipleLighting(VertexShaderOutput input)
@@ -147,7 +130,7 @@ float4 MultipleLighting(VertexShaderOutput input)
 	[loop]
 	for(uint i = 0; i < Num_Lights; i++)
 	{
-		outputColor = outputColor + LightingSpotlight (input, MLS[i], float3(0,-1,0), MLSDiffuseColors[i]);
+		outputColor = outputColor + LightingSpotlight (input, MLS[i], float3(0,-1,0), MLSDiffuseColors[i], DiffuseColor);
 	}
 
 
@@ -184,7 +167,7 @@ float4 SimplePixelShader(VertexShaderOutput input) : COLOR0
 	
 	float4 color;
 	if(!HasTexture)
-		color = Lighting(input);
+		color = Lighting(input, Light);
 	else
 		color = tex2D(DiffuseTextureSampler, input.TexCoords / textureScale);
 
@@ -202,27 +185,6 @@ technique Simple
 
 //---------------------------------------- Technique: Spotlight --------------------------------
 
-VertexShaderOutput SpotlightVertexShader(VertexShaderInput input)
-{
-	// Allocate an empty output struct
-	VertexShaderOutput output = (VertexShaderOutput)0;
-
-	// Do the matrix multiplications for perspective projection and the world transform
-	float4 worldPosition = mul(input.Position3D, World);
-    float4 viewPosition  = mul(worldPosition, View);
-	output.Position2D    = mul(viewPosition, Projection);
-	
-	output.TexCoords = input.TexCoords;
-	
-	//perform the transposed inverse world transform on the normals
-	output.Normal		 = normalize(mul(input.Normal, (float3x3)WorldNormal));
-	
-	//pass along the position data to the output (for pixel shader use)
-	output.PixelPosition = worldPosition;
-	
-	return output;
-}
-
 float4 SpotlightPixelShader(VertexShaderOutput input) : COLOR0
 {
 	//scale of the textures
@@ -230,13 +192,9 @@ float4 SpotlightPixelShader(VertexShaderOutput input) : COLOR0
 
 	float4 color;
 	if(!HasTexture)
-	{
-		color = LightingSpotlight(input, SpotlightPos1, direction1, color1);
-	}
+		color = LightingSpotlight(input, SpotlightPos1, SpotDirection1, SpotColor1, DiffuseColor);
 	else
-	{
-		color = tex2D(DiffuseTextureSampler, input.TexCoords / textureScale) + LightingSpotlight(input, SpotlightPos1, direction1, color1);
-	}
+		color = LightingSpotlight(input, SpotlightPos1, SpotDirection1, SpotColor1, tex2D(DiffuseTextureSampler, input.TexCoords / textureScale));
 
 	return color;
 }
@@ -245,7 +203,7 @@ technique Spotlight
 {
 	pass Pass0
 	{
-		VertexShader = compile vs_3_0 SpotlightVertexShader();
+		VertexShader = compile vs_3_0 SimpleVertexShader();
 		PixelShader  = compile ps_3_0 SpotlightPixelShader();
 	}
 }
@@ -253,33 +211,16 @@ technique Spotlight
 //---------------------------------------- Technique: Multiple Light Sources ----------------------
 
 
-VertexShaderOutput MLSVertexShader(VertexShaderInput input)
-{
-	// Allocate an empty output struct
-	VertexShaderOutput output = (VertexShaderOutput)0;
-
-	// Do the matrix multiplications for perspective projection and the world transform
-	float4 worldPosition = mul(input.Position3D, World);
-    float4 viewPosition  = mul(worldPosition, View);
-	output.Position2D    = mul(viewPosition, Projection);
-	
-	output.TexCoords = input.TexCoords;
-	
-	//perform the transposed inverse world transform on the normals
-	output.Normal		 = normalize(mul(input.Normal, (float3x3)WorldNormal));
-	
-	//pass along the position data to the output (for pixel shader use)
-	output.PixelPosition = worldPosition;
-	
-	return output;
-}
-
 float4 MLSPixelShader(VertexShaderOutput input) : COLOR0
 {
 	//scale of the textures
 	float textureScale = 0.5;
-	
-	float4 color = MultipleLighting(input);
+
+	float4 color;
+	if(!HasTexture)
+		color = MultipleLighting(input);
+	else
+		color = tex2D(DiffuseTextureSampler, input.TexCoords / textureScale);
 
 	return color;
 }
@@ -288,33 +229,12 @@ technique MultipleLightsSources
 {
 	pass Pass0
 	{
-		VertexShader = compile vs_2_0 MLSVertexShader();
-		PixelShader  = compile ps_2_0 MLSPixelShader();
+		VertexShader = compile vs_3_0 SimpleVertexShader();
+		PixelShader  = compile ps_3_0 MLSPixelShader();
 	} 
 }
 
 //---------------------------------------- Technique: GrayScale ----------------------------------------
-
-VertexShaderOutput GrayScaleVertexShader(VertexShaderInput input)
-{
-	// Allocate an empty output struct
-	VertexShaderOutput output = (VertexShaderOutput)0;
-
-	// Do the matrix multiplications for perspective projection and the world transform
-	float4 worldPosition = mul(input.Position3D, World);
-    float4 viewPosition  = mul(worldPosition, View);
-	output.Position2D    = mul(viewPosition, Projection);
-	
-	output.TexCoords = input.TexCoords;
-	
-	//perform the transposed inverse world transform on the normals
-	output.Normal		 = normalize(mul(input.Normal, (float3x3)WorldNormal));
-	
-	//pass along the position data to the output (for pixel shader use)
-	output.PixelPosition = worldPosition;
-	
-	return output;
-}
 
 float4 GrayScalePixelShader(VertexShaderOutput input) : COLOR0
 {
@@ -323,11 +243,9 @@ float4 GrayScalePixelShader(VertexShaderOutput input) : COLOR0
 	
 	float4 color;
 	if(!HasTexture)
-		color = Lighting(input);
+		color = Lighting(input, Light);
 	else
 		color = tex2D(DiffuseTextureSampler, input.TexCoords / textureScale);
-	
-	
 	
 	return dot(color, float3(0.3, 0.59, 0.11));
 }
@@ -336,7 +254,7 @@ technique GrayScale
 {
 	pass Pass0
 	{
-		VertexShader = compile vs_3_0 GrayScaleVertexShader();
+		VertexShader = compile vs_3_0 SimpleVertexShader();
 		PixelShader  = compile ps_3_0 GrayScalePixelShader();
 	}
 }

@@ -225,8 +225,6 @@ namespace GraphicsPractical3
                     effect.CurrentTechnique = effect.Techniques["Simple"];
                     break;
                 case 1:
-                    modelMaterial.DiffuseColor = Color.White;
-                    modelMaterial.AmbientColor = Color.White;
                     effect.CurrentTechnique = effect.Techniques["Spotlight"];
                     break;
                 case 2:
