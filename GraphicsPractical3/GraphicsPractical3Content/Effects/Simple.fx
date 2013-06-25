@@ -5,10 +5,8 @@
 
 //------------------------------------- Top Level Variables -------------------------------------
 
-// Top level variables can and have to be set at runtime
-
 // Positions of the lightsource and the camera
-float3 Light,SpotlightPos1, CameraPosition, direction1;
+float3 Light, SpotlightPos1, CameraPosition, direction1;
 // Matrices for 3D perspective projection 
 float4x4 View, Projection, World, WorldNormal;
 // Light Colors
@@ -49,38 +47,6 @@ struct VertexShaderOutput
 };
 
 //------------------------------------------ Functions ------------------------------------------
-
-// Implement the Coloring using normals assignment here
-float4 NormalColor(float3 normal)
-{
-	//copy the data to the output
-	float4 output;
-	output.xyz = normal	;
-	output.w = 1.0;
-	
-	return output;
-}
-
-// Implement the Procedural texturing assignment here
-float4 ProceduralColor(VertexShaderOutput input)
-{
-	//reverse the normal and save its values in iNormal
-	float3 iNormal = -input.Normal;
-	float width = 2;
-	float height = 2;
-	
-	// if the sin of the Y and X coordinates are BOTH above or below 0
-	if( (sin(Pi * input.PixelPosition.x / width) > 0 && sin(Pi * input.PixelPosition.y / height) > 0) || (sin(Pi * input.PixelPosition.x / width) <= 0 && sin(Pi * input.PixelPosition.y / height) <= 0) )
-	{
-		//color using the normal
-		return NormalColor(input.Normal);	
-	}
-	else
-	{
-		//color using the inverse
-		return NormalColor(iNormal);
-	}
-}
 
 float4 Lighting(VertexShaderOutput input)
 {
@@ -138,7 +104,7 @@ float4 LightingSpotlight(VertexShaderOutput input, float3 SpotlightPos, float3 d
     float coneDot = dot(-lightDir, direction);
     
     float diffuse;
-    float4 result,ambient;
+    float4 result, ambient;
     
     float alpha, beta;
     alpha = 60.0;
@@ -146,44 +112,29 @@ float4 LightingSpotlight(VertexShaderOutput input, float3 SpotlightPos, float3 d
     
     if(coneDot > radians(alpha))
     {
-    //calculate the halfway vector	
+		//calculate the cosine of the angle between the normal and the directional light and clamp it between 0 and 1;
+		diffuse = saturate(mul(input.Normal, lightDir));
 	
-	//calculate the cosine of the angle between the normal and the directional light and clamp it between 0 and 1;
-	diffuse = saturate(mul(input.Normal, lightDir));
-	
-	//calculate the ambient light
-	ambient = color * AmbientIntensity;
+		//calculate the ambient light
+		ambient = color * AmbientIntensity;
     
-    result = ambient * diffuse;
-	
-    
+		result = ambient + diffuse;
     }
     else if(coneDot < radians(alpha) && coneDot > radians(beta))
-    {
-    
-	float fadeValue = (coneDot - radians(beta)) / (radians(alpha) - radians(beta));
-	//calculate the cosine of the angle between the normal and the directional light and clamp it between 0 and 1;
-	diffuse = saturate(mul(input.Normal, lightDir));
+    {    
+		float fadeValue = (coneDot - radians(beta)) / (radians(alpha) - radians(beta));
+		//calculate the cosine of the angle between the normal and the directional light and clamp it between 0 and 1;
+		diffuse = saturate(mul(input.Normal, lightDir));
 	
-	//calculate the ambient light
-	ambient = color * AmbientIntensity;
+		//calculate the ambient light
+		ambient = color * AmbientIntensity;
     
-    //combine all the lighting
-
-    result = ambient * diffuse;
-    result *= fadeValue;
-    
-
-    
-        
+		//combine all the lighting
+		result = ambient + diffuse;
+		result *= fadeValue;        
     }
-    
-    
-	
-
 
 	return  result;
-
 }
 
 float4 MultipleLighting(VertexShaderOutput input)
@@ -203,7 +154,7 @@ float4 MultipleLighting(VertexShaderOutput input)
 	return  outputColor;
 }
 
-//---------------------------------------- Technique: Simple ----------------------------------------
+//---------------------------------------- Technique: Simple ------------------------------------
 
 VertexShaderOutput SimpleVertexShader(VertexShaderInput input)
 {
@@ -249,7 +200,7 @@ technique Simple
 	}
 }
 
-//---------------------------------------- Technique: Spotlight ----------------------------------------
+//---------------------------------------- Technique: Spotlight --------------------------------
 
 VertexShaderOutput SpotlightVertexShader(VertexShaderInput input)
 {
@@ -276,10 +227,16 @@ float4 SpotlightPixelShader(VertexShaderOutput input) : COLOR0
 {
 	//scale of the textures
 	float textureScale = 0.5;
-	
 
-    float4 color = LightingSpotlight(input,SpotlightPos1, direction1,color1);
-
+	float4 color;
+	if(!HasTexture)
+	{
+		color = LightingSpotlight(input, SpotlightPos1, direction1, color1);
+	}
+	else
+	{
+		color = tex2D(DiffuseTextureSampler, input.TexCoords / textureScale) + LightingSpotlight(input, SpotlightPos1, direction1, color1);
+	}
 
 	return color;
 }
@@ -293,7 +250,7 @@ technique Spotlight
 	}
 }
 
-//---------------------------------------- Technique: Multiple Light Sources ----------------------------------------
+//---------------------------------------- Technique: Multiple Light Sources ----------------------
 
 
 VertexShaderOutput MLSVertexShader(VertexShaderInput input)

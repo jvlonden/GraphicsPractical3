@@ -345,7 +345,7 @@ namespace GraphicsPractical3
         {    
 
             // Clear the screen in a predetermined color and clear the depth buffer
-            this.device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.DeepSkyBlue, 1.0f, 0);
+            this.device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1.0f, 0);
 
             ModelMesh[] meshes = new ModelMesh[3] { this.model.Meshes[0],
                                                     this.model.Meshes[0],
