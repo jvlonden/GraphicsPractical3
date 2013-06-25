@@ -138,7 +138,7 @@ float4 LightingSpotlight(VertexShaderOutput input, float3 SpotlightPos, float3 d
     float coneDot = dot(-lightDir, direction);
     
     float diffuse;
-    float4 ambient,result;
+    float4 result,ambient;
     
     float alpha, beta;
     alpha = 60.0;
@@ -152,9 +152,9 @@ float4 LightingSpotlight(VertexShaderOutput input, float3 SpotlightPos, float3 d
 	diffuse = saturate(mul(input.Normal, lightDir));
 	
 	//calculate the ambient light
-	ambient = AmbientColor * AmbientIntensity;
+	ambient = color * AmbientIntensity;
     
-    result = ambient + color * diffuse;
+    result = ambient * diffuse;
 	
     
     }
@@ -166,11 +166,11 @@ float4 LightingSpotlight(VertexShaderOutput input, float3 SpotlightPos, float3 d
 	diffuse = saturate(mul(input.Normal, lightDir));
 	
 	//calculate the ambient light
-	ambient = AmbientColor * AmbientIntensity;
+	ambient = color * AmbientIntensity;
     
     //combine all the lighting
 
-    result = ambient + color * diffuse;
+    result = ambient * diffuse;
     result *= fadeValue;
     
 

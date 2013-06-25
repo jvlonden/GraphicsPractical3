@@ -93,7 +93,7 @@ namespace GraphicsPractical3
             this.modelMaterial.Light = new Vector3(50, 50, 50);
             //set the spotlights parameters
             this.modelMaterial.SpotlightPos = new Vector3(20,20,30);
-            this.modelMaterial.spotColor = Color.AliceBlue;
+            this.modelMaterial.spotColor = Color.Red;
             this.modelMaterial.spotDirection = new Vector3(-0.5f, -1, -0.5f);
 
             //Multiple Lights creation 
