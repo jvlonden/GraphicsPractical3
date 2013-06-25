@@ -37,6 +37,11 @@ namespace GraphicsPractical3
         private short[] quadIndices;
         private Matrix quadTransform;
 
+        // Multiple Light Sources
+        private int NumberOfLights;
+        private Vector3[] MLS;
+        private Vector3[] MLSDiffuseColors;
+
         public Game1()
         {
             this.graphics = new GraphicsDeviceManager(this);
@@ -74,7 +79,7 @@ namespace GraphicsPractical3
             this.spriteBatch = new SpriteBatch(this.device);
             // Load the "Simple" effect
             effect = this.Content.Load<Effect>("Effects/Simple");
-            currentTechniqueNumber = 1;
+            currentTechniqueNumber = 2;
             numberOfTechniques = 3;
             // Load the model and let it use the "Simple" effect
             this.model = this.Content.Load<Model>("Models/femalehead");
@@ -88,6 +93,13 @@ namespace GraphicsPractical3
             this.modelMaterial.Light = new Vector3(50, 50, 50);
             //set the spotlights position and angles
             this.modelMaterial.SpotlightPos = new Vector3(0,50,30);
+
+            //Multiple Lights creation 
+            NumberOfLights = 10;
+            MLS = new Vector3[NumberOfLights];
+            MLSDiffuseColors = new Vector3[NumberOfLights];
+            MultipleLightCreation();
+
 
             //ambient light color
             this.modelMaterial.AmbientColor = Color.Blue;
@@ -132,6 +144,21 @@ namespace GraphicsPractical3
 
             this.quadIndices = new short[] { 0, 1, 2, 1, 2, 3 };
             this.quadTransform = Matrix.CreateScale(scale) * Matrix.CreateTranslation(0.0f, -7.5f, 0.0f);
+        }
+
+        //----------------------------------------------------------------------------
+        // Name: MultipleLightCreation()
+        // Desc: Create multiple lights 
+        //----------------------------------------------------------------------------
+        private void MultipleLightCreation()
+        {            
+            for (int i = 0; i < NumberOfLights; i++)
+            {
+                MLS[i] = new Vector3(i * 5 + 5, i * 5 + 5, i * 5 + 5);
+                MLSDiffuseColors[i] = new Vector3(i * 25 + 5, i * 5 + 25, i * 5 + 25);
+            }
+            this.modelMaterial.MLS = MLS;
+            this.modelMaterial.MLSDiffuseColors = MLSDiffuseColors;
         }
 
         //----------------------------------------------------------------------------
@@ -185,6 +212,10 @@ namespace GraphicsPractical3
                     this.modelMaterial.DiffuseColor = Color.White;
                     this.modelMaterial.AmbientColor = Color.White;
                     effect.CurrentTechnique = effect.Techniques["Spotlight"];
+                    break;
+                case 2:
+                    effect.CurrentTechnique = effect.Techniques["MultipleLightsSources"];
+
                     break;
             }
         }

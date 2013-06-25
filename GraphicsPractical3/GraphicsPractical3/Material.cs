@@ -37,8 +37,15 @@ namespace GraphicsPractical3
         public bool ProceduralColoring;
         // Position of the light
         public Vector3 Light;
+
         //Position of the Spotlight
         public Vector3 SpotlightPos;
+
+        // Multiple Light Sources Array
+        public Vector3[] MLS;
+        // Multiple Light Sources Diffuse Colors
+        public Vector3[] MLSDiffuseColors;
+
         // Position of the eye
         public Vector3 Eye;
         // Roughness of the object
@@ -62,6 +69,8 @@ namespace GraphicsPractical3
             effect.Parameters["HasTexture"].SetValue(this.DiffuseTexture != null);
             //effect.Parameters["HasNormalMap"].SetValue(this.NormalMap != null);
             effect.Parameters["Light"].SetValue(this.Light);
+            effect.Parameters["MLS"].SetValue(this.MLS);
+            effect.Parameters["MLSDiffuseColors"].SetValue(this.MLSDiffuseColors);
             //effect.Parameters["Eye"].SetValue(this.Eye);
             effect.Parameters["SpotlightPos"].SetValue(this.SpotlightPos);
             effect.Parameters["Roughness"].SetValue(this.Roughness);
