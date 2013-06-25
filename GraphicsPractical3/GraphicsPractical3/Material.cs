@@ -39,8 +39,8 @@ namespace GraphicsPractical3
         public bool ProceduralColoring;
         // Position of the light
         public Vector3 Light;
-        // Position of the eye
-        public Vector3 Eye;
+        //Position of the Spotlight
+        public Vector3 SpotlightPos;
 
 
         // Using this function requires all these elements to be present as top-level variables in the shader code. Comment out the ones that you don't use
@@ -61,6 +61,7 @@ namespace GraphicsPractical3
             //effect.Parameters["HasNormalMap"].SetValue(this.NormalMap != null);
             effect.Parameters["Light"].SetValue(this.Light);
             //effect.Parameters["Eye"].SetValue(this.Eye);
+            effect.Parameters["SpotlightPos"].SetValue(this.SpotlightPos);
         }
     }
 }

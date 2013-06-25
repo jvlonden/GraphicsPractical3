@@ -74,8 +74,8 @@ namespace GraphicsPractical3
             this.spriteBatch = new SpriteBatch(this.device);
             // Load the "Simple" effect
             effect = this.Content.Load<Effect>("Effects/Simple");
-            currentTechniqueNumber = 0;
-            numberOfTechniques = 1;
+            currentTechniqueNumber = 1;
+            numberOfTechniques = 3;
             // Load the model and let it use the "Simple" effect
             this.model = this.Content.Load<Model>("Models/femalehead");
             this.model.Meshes[0].MeshParts[0].Effect = effect;
@@ -83,12 +83,14 @@ namespace GraphicsPractical3
             this.setupQuad();
 
             //set the color of the object
-            this.modelMaterial.DiffuseColor = Color.Red;
+            this.modelMaterial.DiffuseColor = Color.White;
             //set the position of the light   
             this.modelMaterial.Light = new Vector3(50, 50, 50);
+            //set the spotlights position and angles
+            this.modelMaterial.SpotlightPos = new Vector3(0,50,0);
 
             //ambient light color
-            this.modelMaterial.AmbientColor = Color.Red;
+            this.modelMaterial.AmbientColor = Color.White;
             //ambient light intensity
             this.modelMaterial.AmbientIntensity = 0.2f;
 
@@ -167,6 +169,7 @@ namespace GraphicsPractical3
                 camera.Eye = Vector3.Transform(camera.Eye, zoomOut);
             }
 
+
             // Technique Cycle
             if (inputHandler.CheckKey(Keys.Space, false))
                 currentTechniqueNumber++;
@@ -177,6 +180,11 @@ namespace GraphicsPractical3
             { 
                 case 0:
                     effect.CurrentTechnique = effect.Techniques["Simple"];
+                    break;
+                case 1:
+                    this.modelMaterial.DiffuseColor = Color.White;
+                    this.modelMaterial.AmbientColor = Color.White;
+                    effect.CurrentTechnique = effect.Techniques["Spotlight"];
                     break;
             }
         }
@@ -243,7 +251,10 @@ namespace GraphicsPractical3
             // Update the window title
             this.Window.Title = "XNA Renderer | FPS: " + this.frameRateCounter.FrameRate;
 
+
+
             base.Update(gameTime);
+
         }        
 
         protected override void Draw(GameTime gameTime)
