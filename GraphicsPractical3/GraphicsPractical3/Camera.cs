@@ -21,6 +21,8 @@ namespace GraphicsPractical3
         private Matrix viewMatrix;
         private Matrix projectionMatrix;
 
+        private BoundingFrustum fustrum;
+
         public Camera(Vector3 camEye, Vector3 camFocus, Vector3 camUp, float aspectRatio = 4.0f / 3.0f)
         {
             this.up = camUp;
@@ -32,52 +34,40 @@ namespace GraphicsPractical3
             this.updateViewMatrix();
         }
 
-        /// <summary>
-        /// Recalculates the view matrix from the up, eye and focus vectors.
-        /// </summary>
         private void updateViewMatrix()
         {
             this.viewMatrix = Matrix.CreateLookAt(eye, focus, up);
+            // Update the fustrum of the camera
+            this.fustrum = new BoundingFrustum(viewMatrix * projectionMatrix);
         }
 
-        /// <summary>
-        /// Current position of the camera.
-        /// </summary>
         public Vector3 Eye
         {
             get { return this.eye; }
             set { this.eye = value; this.updateViewMatrix(); }
         }
 
-        /// <summary>
-        /// The point the camera is looking at.
-        /// </summary>
         public Vector3 Focus
         {
             get { return this.focus; }
             set { this.focus = value; this.updateViewMatrix(); }
         }
 
-        /// <summary>
-        /// The calculated view matrix.
-        /// </summary>
         public Matrix ViewMatrix
         {
             get { return this.viewMatrix; }
         }
 
-        /// <summary>
-        /// The calculated projection matrix.
-        /// </summary>
         public Matrix ProjectionMatrix
         {
             get { return this.projectionMatrix; }
         }
 
-        /// <summary>
-        /// Sets the view and projection matrices in the effect and also the cameraposition if the CameraPosition global is found.
-        /// </summary>
-        /// <param name="effect">The effect to set the parameters of.</param>
+        public BoundingFrustum Fustrum
+        {
+            get { return this.fustrum; }
+        }
+
         public void SetEffectParameters(Effect effect)
         {
             // Set the right matrices in the effect.

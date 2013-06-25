@@ -17,7 +17,8 @@ namespace GraphicsPractical3
         private GraphicsDevice device;
         private GraphicsDeviceManager graphics;
         private SpriteBatch spriteBatch;
-        private FrameRateCounter frameRateCounter;        
+        private FrameRateCounter frameRateCounter;
+        private SpriteFont spriteFont;
 
         // Effects
         private Effect effect;
@@ -77,13 +78,19 @@ namespace GraphicsPractical3
         {
             // Create a SpriteBatch object
             this.spriteBatch = new SpriteBatch(this.device);
+
+            // Create a SpriteFor object
+            this.spriteFont = this.Content.Load<SpriteFont>("Fonts/Font");
+
             // Load the "Simple" effect
             effect = this.Content.Load<Effect>("Effects/Simple");
             currentTechniqueNumber = 1;
             numberOfTechniques = 3;
+
             // Load the model and let it use the "Simple" effect
             this.model = this.Content.Load<Model>("Models/femalehead");
             this.model.Meshes[0].MeshParts[0].Effect = effect;
+
             // Setup the quad
             this.setupQuad();
 
@@ -119,6 +126,7 @@ namespace GraphicsPractical3
 
             this.inputHandler = new InputHandler();
         }
+
         private void setupQuad()
         {
             float scale = 50.0f;
@@ -212,8 +220,8 @@ namespace GraphicsPractical3
                     effect.CurrentTechnique = effect.Techniques["Simple"];
                     break;
                 case 1:
-                    this.modelMaterial.DiffuseColor = Color.White;
-                    this.modelMaterial.AmbientColor = Color.White;
+                    modelMaterial.DiffuseColor = Color.White;
+                    modelMaterial.AmbientColor = Color.White;
                     effect.CurrentTechnique = effect.Techniques["Spotlight"];
                     break;
                 case 2:
@@ -224,27 +232,64 @@ namespace GraphicsPractical3
         }
 
         //----------------------------------------------------------------------------
-        // Name: DrawModel()
+        // Name: InFustrum()
+        // Desc: Checks wether an object is inside the fustrum
+        //----------------------------------------------------------------------------
+        private bool InFustrum(ModelMesh mesh, Matrix transform)
+        {
+            // check for intersection between the fustrum and the transformed modelmesh
+            if (camera.Fustrum.Intersects(mesh.BoundingSphere.Transform(transform)))
+                return true;
+            return false;
+        }
+
+        private void DrawText(int[] cullCount)
+        {
+            // Write some text on the screen
+            spriteBatch.Begin();
+            spriteBatch.DrawString(spriteFont, "Drawn: " + cullCount[0], new Vector2(20.0f, 20.0f), Color.Red);
+            spriteBatch.DrawString(spriteFont, "Culled: " + cullCount[1], new Vector2(20.0f, 40.0f), Color.Red);
+            spriteBatch.End();
+
+            // Reset everything that SpriteBatch fucks up
+            this.device.BlendState = BlendState.Opaque;
+            this.device.DepthStencilState = DepthStencilState.Default;
+            GraphicsDevice.RasterizerState = new RasterizerState() { CullMode = CullMode.None };
+        }
+
+        //----------------------------------------------------------------------------
+        // Name: DrawModel(
         // Desc: Draws the Model
         //----------------------------------------------------------------------------
-        private void DrawModel()
+        private int[] DrawModels(ModelMesh[] meshes, Matrix[] worldTransforms)
         {
-            // Get the model's only mesh
-            ModelMesh mesh = this.model.Meshes[0];
+            int drawn = meshes.Length;
+            int culled = 0;
+            for (int i = 0; i < meshes.Length; i++)
+            {
+                // Don't draw it if it isn't in the FoV
+                if (InFustrum(meshes[i], worldTransforms[i]))
+                {
+                    // Matrices for 3D perspective projection
+                    this.camera.SetEffectParameters(effect);
 
-            // Matrices for 3D perspective projection
-            this.camera.SetEffectParameters(effect);
+                    // World transform for the teapot
+                    effect.Parameters["World"].SetValue(worldTransforms[i]);
+                    effect.Parameters["WorldNormal"].SetValue(Matrix.Transpose(Matrix.Invert(worldTransforms[i])));
 
-            // World transform for the teapot
-            Matrix worldTransform = Matrix.CreateScale(0.5f);
-            effect.Parameters["World"].SetValue(worldTransform);
-            effect.Parameters["WorldNormal"].SetValue(Matrix.Transpose(Matrix.Invert(worldTransform)));
+                    // Let the shader know there's no texture
+                    effect.Parameters["HasTexture"].SetValue(false);
 
-            // Let the shader know there's no texture
-            effect.Parameters["HasTexture"].SetValue(false);
-
-            // Draw the model
-            mesh.Draw();
+                    // Draw the model
+                    meshes[i].Draw();
+                }
+                else
+                {
+                    drawn--;
+                    culled++;
+                }
+            }
+            return new int[2] { drawn, culled };
         }
 
         //----------------------------------------------------------------------------
@@ -290,11 +335,24 @@ namespace GraphicsPractical3
         }        
 
         protected override void Draw(GameTime gameTime)
-        {
+        {    
+
             // Clear the screen in a predetermined color and clear the depth buffer
             this.device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.DeepSkyBlue, 1.0f, 0);
 
-            DrawModel();
+            ModelMesh[] meshes = new ModelMesh[3] { this.model.Meshes[0],
+                                                    this.model.Meshes[0],
+                                                    this.model.Meshes[0] };
+
+            Matrix[] worldTransforms = new Matrix[3] { Matrix.CreateScale(0.5f),
+                                                       Matrix.CreateScale(0.5f) * Matrix.CreateTranslation(20.0f, 0.0f, -20.0f), 
+                                                       Matrix.CreateScale(0.5f) * Matrix.CreateTranslation(-20.0f, 0.0f, -20.0f) };
+            
+            // Draw the models
+            int[] cullCount = DrawModels(meshes, worldTransforms);
+            // Draw the text
+            DrawText(cullCount);
+            // Draw the Textured Quad
             DrawTexturedQuad();            
 
             base.Draw(gameTime);
