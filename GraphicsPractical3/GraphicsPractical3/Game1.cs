@@ -79,7 +79,7 @@ namespace GraphicsPractical3
             this.spriteBatch = new SpriteBatch(this.device);
             // Load the "Simple" effect
             effect = this.Content.Load<Effect>("Effects/Simple");
-            currentTechniqueNumber = 2;
+            currentTechniqueNumber = 0;
             numberOfTechniques = 3;
             // Load the model and let it use the "Simple" effect
             this.model = this.Content.Load<Model>("Models/femalehead");
@@ -108,7 +108,7 @@ namespace GraphicsPractical3
 
             //specular light settings
             this.modelMaterial.SpecularColor = Color.White;
-            this.modelMaterial.SpecularIntensity = 10.0f;
+            this.modelMaterial.SpecularIntensity = 2.0f;
             this.modelMaterial.Roughness = 05f;
             this.modelMaterial.ReflectionCoefficient = 1.42f;
 

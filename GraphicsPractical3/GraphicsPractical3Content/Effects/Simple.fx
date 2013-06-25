@@ -105,7 +105,7 @@ float4 Lighting(VertexShaderOutput input)
 	// distribution
 	float D = exp(-tan2a/m2)/(Pi * m2 * cos4a);	
 	// reflection
-	float F = ReflectionCoefficient + (1 - ReflectionCoefficient)*pow((1  - EdotN), 5);
+	float F = ReflectionCoefficient + (1 - ReflectionCoefficient)*pow((1  - EdotH), 5);
 	// attenuation
 	float G = min(2*HdotN*EdotN/EdotH,
 			  min(2*HdotN*LdotN/EdotH,
@@ -172,11 +172,7 @@ float4 LightingSpotlight(VertexShaderOutput input)
     //combine all the lighting
 
     result = ambient + DiffuseColor * diffuse;
-    result *= fadeValue;
-    
-
-    
-        
+    result *= fadeValue;        
     }
     else
     {
@@ -184,10 +180,6 @@ float4 LightingSpotlight(VertexShaderOutput input)
         ambient = 0;
         result = 0;
     }
-    
-    
-	
-
 	return  result;
 
 }
