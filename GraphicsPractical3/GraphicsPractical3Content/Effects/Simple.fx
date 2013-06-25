@@ -290,11 +290,7 @@ technique MultipleLightsSources
 	{
 		VertexShader = compile vs_2_0 MLSVertexShader();
 		PixelShader  = compile ps_2_0 MLSPixelShader();
-<<<<<<< HEAD
 	} 
-}
-=======
-	}
 }
 
 //---------------------------------------- Technique: GrayScale ----------------------------------------
@@ -344,4 +340,4 @@ technique GrayScale
 		PixelShader  = compile ps_3_0 GrayScalePixelShader();
 	}
 }
->>>>>>> GrayScale
+
