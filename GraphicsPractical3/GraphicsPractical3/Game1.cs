@@ -87,7 +87,7 @@ namespace GraphicsPractical3
             //set the position of the light   
             this.modelMaterial.Light = new Vector3(50, 50, 50);
             //set the spotlights position and angles
-            this.modelMaterial.SpotlightPos = new Vector3(0,50,0);
+            this.modelMaterial.SpotlightPos = new Vector3(0,50,30);
 
             //ambient light color
             this.modelMaterial.AmbientColor = Color.Blue;

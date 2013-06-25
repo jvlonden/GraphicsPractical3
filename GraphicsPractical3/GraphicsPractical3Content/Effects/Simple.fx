@@ -107,15 +107,15 @@ float4 LightingSpotlight(VertexShaderOutput input)
 	float3 viewDir = normalize(CameraPosition - input.PixelPosition);
     
     float3 dirToLight = normalize(SpotlightPos - CameraPosition);
-    float3 direction = float3(0,-1,0);
+    float3 direction = float3(0,-1,-0.5);
     float coneDot = dot(-lightDir, direction);
     
     float diffuse;
     float4 ambient,result;
     
     float alpha, beta;
-    alpha = 50.0;
-    beta = 45.0;
+    alpha = 60.0;
+    beta = 55.0;
     
     if(coneDot > radians(alpha))
     {
