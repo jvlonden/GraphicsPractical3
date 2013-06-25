@@ -107,8 +107,8 @@ float4 LightingSpotlight(VertexShaderOutput input)
 	float3 viewDir = normalize(CameraPosition - input.PixelPosition);
     
     float3 dirToLight = normalize(SpotlightPos - CameraPosition);
-    float3 direction = float3(0,1,0);
-    float coneDot = dot(lightDir, direction);
+    float3 direction = float3(0,-1,0);
+    float coneDot = dot(-lightDir, direction);
     
     float diffuse;
     float4 ambient,result;
