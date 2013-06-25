@@ -41,11 +41,15 @@ namespace GraphicsPractical3
         //Position of the Spotlight
         public Vector3 SpotlightPos;
 
+
         // Multiple Light Sources Array
         public Vector3[] MLS;
         // Multiple Light Sources Diffuse Colors
         public Vector3[] MLSDiffuseColors;
 
+
+        public Vector3 spotDirection;
+        public Color spotColor;
         // Position of the eye
         public Vector3 Eye;
         // Roughness of the object
@@ -72,7 +76,9 @@ namespace GraphicsPractical3
             effect.Parameters["MLS"].SetValue(this.MLS);
             effect.Parameters["MLSDiffuseColors"].SetValue(this.MLSDiffuseColors);
             //effect.Parameters["Eye"].SetValue(this.Eye);
-            effect.Parameters["SpotlightPos"].SetValue(this.SpotlightPos);
+            effect.Parameters["SpotlightPos1"].SetValue(this.SpotlightPos);
+            effect.Parameters["direction1"].SetValue(this.spotDirection);
+            effect.Parameters["color1"].SetValue(this.spotColor.ToVector4());
             effect.Parameters["Roughness"].SetValue(this.Roughness);
             effect.Parameters["ReflectionCoefficient"].SetValue(this.ReflectionCoefficient);
         }
