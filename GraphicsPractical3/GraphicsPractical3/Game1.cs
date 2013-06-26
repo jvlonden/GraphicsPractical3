@@ -19,11 +19,13 @@ namespace GraphicsPractical3
         private SpriteBatch spriteBatch;
         private FrameRateCounter frameRateCounter;
         private SpriteFont spriteFont;
+        private Random random;
 
         // Effects
         private Effect effect;
         private int numberOfTechniques;
         private int currentTechniqueNumber;
+        private string currentTechnique;
 
         // Game objects and variables
         private Camera camera;
@@ -37,11 +39,6 @@ namespace GraphicsPractical3
         private VertexPositionNormalTexture[] quadVertices;
         private short[] quadIndices;
         private Matrix quadTransform;
-
-        // Multiple Light Sources
-        private int NumberOfLights;
-        private Vector3[] MLS;
-        private Vector3[] MLSDiffuseColors;
 
         public Game1()
         {
@@ -68,6 +65,8 @@ namespace GraphicsPractical3
             this.graphics.ApplyChanges();
             // Initialize the camera
             this.camera = new Camera(new Vector3(0, 50, 100), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+            // RNG
+            this.random = new Random();
 
             this.IsMouseVisible = true;
 
@@ -84,7 +83,7 @@ namespace GraphicsPractical3
 
             // Load the "Simple" effect
             effect = this.Content.Load<Effect>("Effects/Simple");
-            currentTechniqueNumber = 1;
+            currentTechniqueNumber = 0;
             numberOfTechniques = 4;
 
             // Load the model and let it use the "Simple" effect
@@ -95,30 +94,22 @@ namespace GraphicsPractical3
             this.setupQuad();
 
             //set the color of the object
-            this.modelMaterial.DiffuseColor = Color.Gold;
+            this.modelMaterial.DiffuseColor = Color.GreenYellow;
             //set the position of the light   
             this.modelMaterial.Light = new Vector3(50, 50, 50);
-            //set the spotlights parameters
-            this.modelMaterial.SpotlightPos = new Vector3(20,20,30);
-            this.modelMaterial.spotColor = Color.Red;
-            this.modelMaterial.spotDirection = new Vector3(-0.5f, -1, -0.5f);
 
             //Multiple Lights creation 
-            NumberOfLights = 10;
-            MLS = new Vector3[NumberOfLights];
-            MLSDiffuseColors = new Vector3[NumberOfLights];
-            MultipleLightCreation();
-
+            CreateMultipleSpots();
 
             //ambient light color
-            this.modelMaterial.AmbientColor = Color.Gold;
+            this.modelMaterial.AmbientColor = Color.Black;
             //ambient light intensity
             this.modelMaterial.AmbientIntensity = 0.2f;
 
             //specular light settings
             this.modelMaterial.SpecularColor = Color.White;
-            this.modelMaterial.SpecularIntensity = 2.0f;
-            this.modelMaterial.Roughness = 05f;
+            this.modelMaterial.SpecularIntensity = 1.5f;
+            this.modelMaterial.Roughness = 2.0f;
             this.modelMaterial.ReflectionCoefficient = 1.42f;
 
             //apply changes for the model effect
@@ -153,27 +144,77 @@ namespace GraphicsPractical3
             this.quadVertices[3].TextureCoordinate = new Vector2(1, 1);
 
             this.quadIndices = new short[] { 0, 1, 2, 1, 2, 3 };
-            this.quadTransform = Matrix.CreateScale(scale) * Matrix.CreateTranslation(0.0f, -7.5f, 0.0f);
+            this.quadTransform = Matrix.CreateScale(scale) * Matrix.CreateTranslation(0.0f, -9.0f, 0.0f);
         }
 
         //----------------------------------------------------------------------------
         // Name: MultipleLightCreation()
         // Desc: Create multiple lights 
         //----------------------------------------------------------------------------
-        private void MultipleLightCreation()
-        {            
-            for (int i = 0; i < NumberOfLights; i++)
-            {
+        private void CreateMultipleSpots()
+        {
+            Vector3 pos, dir, foc;
+            Vector4 col;
 
-                MLSDiffuseColors[i] = new Vector3(0, 10, 0);
+            modelMaterial.SpotPos = new Vector3[10];
+            modelMaterial.SpotDir = new Vector3[10];
+            modelMaterial.SpotCol = new Vector4[10];
+
+            modelMaterial.SpotPos[0] = new Vector3(60, 60, 90);
+            modelMaterial.SpotDir[0] = Vector3.Normalize(new Vector3(-60, -60, -90));
+            modelMaterial.SpotCol[0] = Color.Red.ToVector4();
+
+            for (int i = 1; i < 10; i++)
+            { 
+                pos = new Vector3(random.Next(-90, 90),
+                                  60,
+                                  random.Next(-90, 90));
+
+                foc = new Vector3(random.Next(-30, 30),
+                                  0,
+                                  random.Next(-30, 30));
+
+                dir = Vector3.Normalize(foc - pos);
+
+                switch (i)
+                { 
+                    case 1:
+                        col = Color.Blue.ToVector4();
+                        break;
+                    case 2:
+                        col = Color.Green.ToVector4();
+                        break;
+                    case 3:
+                        col = Color.Yellow.ToVector4();
+                        break;
+                    case 4:
+                        col = Color.Orange.ToVector4();
+                        break;
+                    case 5:
+                        col = Color.Purple.ToVector4();
+                        break;
+                    case 6:
+                        col = Color.Pink.ToVector4();
+                        break;
+                    case 7:
+                        col = Color.White.ToVector4();
+                        break;
+                    case 8:
+                        col = Color.Cyan.ToVector4();
+                        break;
+                    case 9:
+                        col = Color.Magenta.ToVector4();
+                        break;
+                    default:
+                        col = Color.Black.ToVector4();
+                        break;
+                }
+
+                modelMaterial.SpotPos[i] = pos;
+                modelMaterial.SpotDir[i] = dir;
+                modelMaterial.SpotCol[i] = col;
             }
-            MLS[1] = new Vector3(10, 70, 10);
-            MLS[2] = new Vector3(-10, 70, 10);
-            MLS[3] = new Vector3(10, 70, -10);
-            MLS[4] = new Vector3(-10, 70, -10);
 
-            this.modelMaterial.MLS = MLS;
-            this.modelMaterial.MLSDiffuseColors = MLSDiffuseColors;
         }
 
         //----------------------------------------------------------------------------
@@ -183,6 +224,16 @@ namespace GraphicsPractical3
         private void HandleInput(float timeStep)
         {
             inputHandler.UpdateStates();
+            CameraControls(timeStep);
+            TechniqueCycle();
+            if (inputHandler.CheckKey(Keys.Enter, false))
+            {
+                CreateMultipleSpots();
+                modelMaterial.SetEffectParameters(effect);
+            }
+        }
+        private void CameraControls(float timeStep)
+        {
             // Camera Movement
             float rotationScale = 0.02f;
             float zoomScale = 0.05f;
@@ -211,27 +262,31 @@ namespace GraphicsPractical3
             {
                 camera.Eye = Vector3.Transform(camera.Eye, zoomOut);
             }
-
-
-            // Technique Cycle
+        }
+        private void TechniqueCycle()
+        {
             if (inputHandler.CheckKey(Keys.Space, false))
                 currentTechniqueNumber++;
             if (currentTechniqueNumber >= numberOfTechniques)
                 currentTechniqueNumber = 0;
 
             switch (currentTechniqueNumber)
-            { 
+            {
                 case 0:
                     effect.CurrentTechnique = effect.Techniques["Simple"];
+                    currentTechnique = "Cook-Torrance";
                     break;
                 case 1:
                     effect.CurrentTechnique = effect.Techniques["Spotlight"];
+                    currentTechnique = "Spotlight";
                     break;
                 case 2:
                     effect.CurrentTechnique = effect.Techniques["MultipleLightsSources"];
+                    currentTechnique = "Multiple Spotlights";
                     break;
                 case 3:
                     effect.CurrentTechnique = effect.Techniques["GrayScale"];
+                    currentTechnique = "Grayscale";
                     break;
             }
         }
@@ -252,8 +307,17 @@ namespace GraphicsPractical3
         {
             // Write some text on the screen
             spriteBatch.Begin();
-            spriteBatch.DrawString(spriteFont, "Drawn: " + cullCount[0], new Vector2(20.0f, 20.0f), Color.Red);
-            spriteBatch.DrawString(spriteFont, "Culled: " + cullCount[1], new Vector2(20.0f, 40.0f), Color.Red);
+            spriteBatch.DrawString(spriteFont, "Drawn:  " + cullCount[0] + "\r\n" +
+                                               "Culled: " + cullCount[1], 
+                                               new Vector2(20.0f, 40.0f), Color.Red);
+
+            spriteBatch.DrawString(spriteFont, "Current technique: " + currentTechnique, new Vector2(20.0f, 20.0f), Color.Red);
+            spriteBatch.DrawString(spriteFont, "CONTROLS" + "\r\n" + "\r\n" +
+                                               "Enter:               New Random Spotlights"  + "\r\n" +
+                                               "Spacebar:            Next Technique"         + "\r\n" +
+                                               "Up and Down:         Zoom"                   + "\r\n" +
+                                               "Left and Right:      Rotate",
+                                               new Vector2(485, 20), Color.Red);
             spriteBatch.End();
 
             // Reset everything that SpriteBatch fucks up

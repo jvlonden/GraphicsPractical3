@@ -1,33 +1,33 @@
 //------------------------------------------- Defines -------------------------------------------
 
 #define Pi 3.14159265
-#define Num_Lights 4
+#define MAX_LIGHTS 5
 
 //------------------------------------- Top Level Variables -------------------------------------
 
 // Positions of the lightsource and the camera
-float3 Light, SpotlightPos1, CameraPosition, SpotDirection1;
+float3 Light, CameraPosition;
 // Matrices for 3D perspective projection 
 float4x4 View, Projection, World, WorldNormal;
 // Light Colors
-float4 DiffuseColor, AmbientColor, SpecularColor, SpotColor1;
+float4 DiffuseColor, AmbientColor, SpecularColor, SpotColSpotPos[MAX_LIGHTS];
 // Other lighting values
 float AmbientIntensity, SpecularPower, SpecularIntensity;
 // Cook-Torrance
 float Roughness, ReflectionCoefficient;
-// Multiple Light Sources
-float3 MLS[Num_Lights];
-float4 MLSDiffuseColors[Num_Lights];
-
-
+// Spotlights
+float3 SpotPos[MAX_LIGHTS], SpotDir[MAX_LIGHTS];
+float4 SpotCol[MAX_LIGHTS];
+// Texture
 Texture DiffuseTexture;
+bool HasTexture;
+
 sampler DiffuseTextureSampler = sampler_state 
 {
 	texture = <DiffuseTexture>;
 	AddressU = mirror;
 	AddressV = mirror;
 };
-bool HasTexture;
 
 //---------------------------------- Input / Output structures ----------------------------------
 
@@ -48,7 +48,7 @@ struct VertexShaderOutput
 
 //------------------------------------------ Functions ------------------------------------------
 
-float CookTorrance(float3 e, float3 l, float3 n, float3 h)
+float4 CookTorrance(float3 e, float3 l, float3 n, float3 h, float4 color, float4 intensity)
 {
 	// some variables to make the final formulas clearer
 	float HdotN = dot(h, n);
@@ -69,7 +69,13 @@ float CookTorrance(float3 e, float3 l, float3 n, float3 h)
 			  min(2*HdotN*LdotN/EdotH,
 			  1));
 	// the specular light	  
-	return D*F*G/EdotN;
+	return color * D*F*G/EdotN * intensity;
+}
+
+float4 Diffuse(float3 l, float3 n, float4 color)
+{
+	// the cosine of the angle between the normal and the directional light and clamp it between 0 and 1;
+	return color * saturate(dot(l, n));
 }
 
 float4 Lighting(VertexShaderOutput input, float3 lightPos)
@@ -82,66 +88,92 @@ float4 Lighting(VertexShaderOutput input, float3 lightPos)
 	// the halfway vector
 	float3 h = normalize(e + l);	
 	
-	// the cosine of the angle between the normal and the directional light and clamp it between 0 and 1;
-	float4 diffuse = DiffuseColor * saturate(dot(l, n));
-	
 	// the ambient light
 	float4 ambient = AmbientColor * AmbientIntensity;
 	
-	// the specula light
-	float4 specular = SpecularColor * CookTorrance(e, l, n, h) * SpecularIntensity;
-	
 	// all the lighting
-	return  ambient + diffuse + specular;
+	return  ambient + Diffuse(l, n, DiffuseColor) + CookTorrance(e, l, n, h, SpecularColor, SpecularIntensity);
 }
 
-float4 LightingSpotlight(VertexShaderOutput input, float3 SpotlightPos, float3 SpotlightDirection, float4 SpotlightColor, float4 ObjectColor )
+float4 LightingSpotlight(VertexShaderOutput input, float3 SpotlightPos, float3 SpotlightDirection, float4 SpotlightColor, float4 DiffuseColor )
 {
 	// the vector between the lightpoint and the position of the pixel
-	float3 lightDir = normalize(SpotlightPos - input.PixelPosition);	
+	float3 l = normalize(SpotlightPos - input.PixelPosition);	
 	float3 n = input.Normal;
 	// the vector between the eye and the .....
 	float3 e = normalize(CameraPosition - input.PixelPosition);
 	// the halfway vector
-	float3 h = normalize(e + lightDir);
+	float3 h = normalize(e + l);
 
-    float coneDot = dot(-lightDir, SpotlightDirection);
+    float coneDot = dot(-l, SpotlightDirection);
     
-    float4 diffuse = (SpotlightColor + ObjectColor) / 2 * saturate(dot(input.Normal, lightDir));
-	float4 specular = SpotlightColor * CookTorrance(e, lightDir, n, h) * SpecularIntensity;
+    float4 diffuse = Diffuse(l, n, DiffuseColor * SpotlightColor);
+	float4 specular = CookTorrance(e, l, n, h, SpotlightColor, SpecularIntensity);
     
-    float alpha, beta;
-    alpha = 60.0;
-    beta = 55.0;
+    float alpha = radians(60.0);
+    float beta = radians(55.0);
     
-    if(coneDot > radians(alpha))
+    if(coneDot > alpha)
 		return diffuse + specular;
 
-    else if(coneDot < radians(alpha) && coneDot > radians(beta))
+    else if(coneDot < alpha && coneDot > beta)
     {    
-		float fadeValue = (coneDot - radians(beta)) / (radians(alpha) - radians(beta));
+		float fadeValue = (coneDot - beta) / (alpha - beta);
 
-		return (diffuse + specular) * fadeValue;
+		return float4((float3)((diffuse + specular) * fadeValue), 1.0f);
 	}
 	else
 		return float4(0.0f, 0.0f, 0.0f, 1.0f);
 }
 
-float4 MultipleLighting(VertexShaderOutput input)
-{
-	float4 color[Num_Lights], diffuse[Num_Lights];
-	
+float4 MultipleSpotlights(VertexShaderOutput input, float4 DiffuseColor)
+{	
+	float3 n = input.Normal;
+	// the vector between the eye and the .....
+	float3 e = normalize(CameraPosition - input.PixelPosition);
 
-	
-	float4 outputColor = float4(0,0,0,0);
-	[loop]
-	for(uint i = 0; i < Num_Lights; i++)
+    float alpha = radians(60.0);
+    float beta = radians(55.0);
+    
+	float4 cDiffuse = float4(0.0f, 0.0f, 0.0f, 1.0f);
+	float4 cSpecular = float4(0.0f, 0.0f, 0.0f, 1.0f);
+	float numOfLights = 0.0f;
+
+	for(int i = 0; i < MAX_LIGHTS; i++)
 	{
-		outputColor = outputColor + LightingSpotlight (input, MLS[i], float3(0,-1,0), MLSDiffuseColors[i], DiffuseColor);
+		// the vector between the spotlight and the position of the pixel
+		float3 l = normalize(SpotPos[i] - input.PixelPosition);	
+		// the halfway vector
+		float3 h = normalize(e + l); 
+		float coneDot = dot(-l, SpotDir[i]); 
+		float4 diffuse = Diffuse(l, n, SpotCol[i]);
+		float4 specular = CookTorrance(e, l, n, h, SpotCol[i], SpecularIntensity);
+
+		if(coneDot > alpha)
+		{
+			cDiffuse += diffuse;
+			cSpecular += specular;
+
+			numOfLights += 1;
+		}
+
+		else if(coneDot < alpha && coneDot > beta)
+		{    
+			float fade = (coneDot - beta) / (alpha - beta);
+
+			cDiffuse += float4((float3)diffuse * fade, 1.0f);
+			cSpecular += float4((float3)specular * fade, 1.0f);
+			
+			numOfLights += fade;
+		}
+	}
+	if(numOfLights > 1)
+	{
+		cDiffuse = cDiffuse / numOfLights;
+		cSpecular = cSpecular / numOfLights;
 	}
 
-
-	return  outputColor;
+	return DiffuseColor * cDiffuse + cSpecular;
 }
 
 //---------------------------------------- Technique: Simple ------------------------------------
@@ -199,9 +231,9 @@ float4 SpotlightPixelShader(VertexShaderOutput input) : COLOR0
 
 	float4 color;
 	if(!HasTexture)
-		color = LightingSpotlight(input, SpotlightPos1, SpotDirection1, SpotColor1, DiffuseColor);
+		color = LightingSpotlight(input, SpotPos[0], SpotDir[0], SpotCol[0], DiffuseColor);
 	else
-		color = LightingSpotlight(input, SpotlightPos1, SpotDirection1, SpotColor1, tex2D(DiffuseTextureSampler, input.TexCoords / textureScale));
+		color = LightingSpotlight(input, SpotPos[0], SpotDir[0], SpotCol[0], tex2D(DiffuseTextureSampler, input.TexCoords / textureScale));
 
 	return color;
 }
@@ -225,9 +257,9 @@ float4 MLSPixelShader(VertexShaderOutput input) : COLOR0
 
 	float4 color;
 	if(!HasTexture)
-		color = MultipleLighting(input);
+		color = MultipleSpotlights(input, DiffuseColor);
 	else
-		color = tex2D(DiffuseTextureSampler, input.TexCoords / textureScale);
+		color = MultipleSpotlights(input, tex2D(DiffuseTextureSampler, input.TexCoords / textureScale));
 
 	return color;
 }
