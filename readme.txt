@@ -1,8 +1,8 @@
 Daan Weller 3988651
-Jordy Van Londen
+Jordy Van Londen 3953750
 Chrit Hameleers 3978125
 
-How we divided the work:
+This is how we divided the work:
 Chrit: spotlight code and support for mulitple spotlights, reimplementation of grayscale
 Daan: Grayscale(begin) and mulitple lights(begin)
 Jordy: Cook-Torrance/ frustrum culling and multiple lights(finished)
@@ -18,7 +18,6 @@ E2 Spotlight
 E3 Multpile Spotlights
 E4 Frustrum Culling
 E5 Grayscale postprocessing
-E6 NYI
 
 Where to find the assignments:
 
