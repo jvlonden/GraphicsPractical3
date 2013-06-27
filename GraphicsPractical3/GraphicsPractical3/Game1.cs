@@ -23,6 +23,7 @@ namespace GraphicsPractical3
 
         // Effects
         private Effect effect;
+        private Effect postProcess;
         private int numberOfTechniques;
         private int currentTechniqueNumber;
         private string currentTechnique;
@@ -40,6 +41,9 @@ namespace GraphicsPractical3
         private short[] quadIndices;
         private Matrix quadTransform;
 
+        //postprocess
+        private RenderTarget2D target;
+        private bool grayScale;
         public Game1()
         {
             this.graphics = new GraphicsDeviceManager(this);
@@ -48,7 +52,7 @@ namespace GraphicsPractical3
             this.frameRateCounter = new FrameRateCounter(this);
             this.Components.Add(this.frameRateCounter);
         }
-        
+
         protected override void Initialize()
         {
             this.device = graphics.GraphicsDevice;
@@ -69,6 +73,8 @@ namespace GraphicsPractical3
             this.random = new Random();
 
             this.IsMouseVisible = true;
+            //initialize rendertarget
+            target = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
 
             base.Initialize();
         }
@@ -83,8 +89,10 @@ namespace GraphicsPractical3
 
             // Load the "Simple" effect
             effect = this.Content.Load<Effect>("Effects/Simple");
+            //load postprocessing effect
+            postProcess = this.Content.Load<Effect>("Effects/PostProcessing");
             currentTechniqueNumber = 0;
-            numberOfTechniques = 4;
+            numberOfTechniques = 3;
 
             // Load the model and let it use the "Simple" effect
             this.model = this.Content.Load<Model>("Models/femalehead");
@@ -147,6 +155,19 @@ namespace GraphicsPractical3
             this.quadTransform = Matrix.CreateScale(scale) * Matrix.CreateTranslation(0.0f, -9.0f, 0.0f);
         }
 
+        private void DrawSceneToTexture(RenderTarget2D renderTarget)
+        {
+            // Set the render target
+            GraphicsDevice.SetRenderTarget(renderTarget);
+
+            GraphicsDevice.DepthStencilState = new DepthStencilState() { DepthBufferEnable = true };
+
+            // Draw the scene
+            DrawScene();
+
+            // Drop the render target
+            GraphicsDevice.SetRenderTarget(null);
+        }
         //----------------------------------------------------------------------------
         // Name: MultipleLightCreation()
         // Desc: Create multiple lights 
@@ -231,6 +252,14 @@ namespace GraphicsPractical3
                 CreateMultipleSpots();
                 modelMaterial.SetEffectParameters(effect);
             }
+            //grayscale toggle
+            if(inputHandler.CheckKey(Keys.G,false))
+            {
+                if (grayScale)
+                    grayScale = false;
+                else
+                    grayScale = true;
+            }
         }
         private void CameraControls(float timeStep)
         {
@@ -284,10 +313,6 @@ namespace GraphicsPractical3
                     effect.CurrentTechnique = effect.Techniques["MultipleLightsSources"];
                     currentTechnique = "Multiple Spotlights";
                     break;
-                case 3:
-                    effect.CurrentTechnique = effect.Techniques["GrayScale"];
-                    currentTechnique = "Grayscale";
-                    break;
             }
         }
 
@@ -316,7 +341,8 @@ namespace GraphicsPractical3
                                                "Enter:               New Random Spotlights"  + "\r\n" +
                                                "Spacebar:            Next Technique"         + "\r\n" +
                                                "Up and Down:         Zoom"                   + "\r\n" +
-                                               "Left and Right:      Rotate",
+                                               "Left and Right:      Rotate"                 + "\r\n" +
+                                               "G:                   apply grayscale effect",
                                                new Vector2(485, 20), Color.Red);
             spriteBatch.End();
 
@@ -401,11 +427,10 @@ namespace GraphicsPractical3
 
             base.Update(gameTime);
 
-        }        
+        }
 
-        protected override void Draw(GameTime gameTime)
-        {    
-
+        private void DrawScene()
+        {
             // Clear the screen in a predetermined color and clear the depth buffer
             this.device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1.0f, 0);
 
@@ -416,14 +441,38 @@ namespace GraphicsPractical3
             Matrix[] worldTransforms = new Matrix[3] { Matrix.CreateScale(0.5f),
                                                        Matrix.CreateScale(0.5f) * Matrix.CreateTranslation(20.0f, 0.0f, -20.0f), 
                                                        Matrix.CreateScale(0.5f) * Matrix.CreateTranslation(-20.0f, 0.0f, -20.0f) };
-            
+
             // Draw the models
             int[] cullCount = DrawModels(meshes, worldTransforms);
             // Draw the text
             DrawText(cullCount);
             // Draw the Textured Quad
-            DrawTexturedQuad();            
+            DrawTexturedQuad();
 
+        }
+
+        protected override void Draw(GameTime gameTime)
+        {
+            DrawSceneToTexture(target);
+
+            if (grayScale)
+            {
+                postProcess.CurrentTechnique = postProcess.Techniques["Grayscale"];
+            }
+            else
+            {
+                postProcess.CurrentTechnique = postProcess.Techniques["normal"];
+            }
+
+
+            GraphicsDevice.Clear(Color.Black);
+            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend,
+                SamplerState.LinearClamp, DepthStencilState.Default,
+                RasterizerState.CullNone, postProcess);
+
+            spriteBatch.Draw(target, new Rectangle(0, 0, 800, 480), Color.White);
+
+            spriteBatch.End();
             base.Draw(gameTime);
         }
     }

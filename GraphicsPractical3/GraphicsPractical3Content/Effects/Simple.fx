@@ -273,28 +273,5 @@ technique MultipleLightsSources
 	} 
 }
 
-//---------------------------------------- Technique: GrayScale ----------------------------------------
 
-float4 GrayScalePixelShader(VertexShaderOutput input) : COLOR0
-{
-	//scale of the textures
-	float textureScale = 0.5;
-	
-	float4 color;
-	if(!HasTexture)
-		color = Lighting(input, Light);
-	else
-		color = tex2D(DiffuseTextureSampler, input.TexCoords / textureScale);
-	
-	return dot(color, float3(0.3, 0.59, 0.11));
-}
-
-technique GrayScale
-{
-	pass Pass0
-	{
-		VertexShader = compile vs_3_0 SimpleVertexShader();
-		PixelShader  = compile ps_3_0 GrayScalePixelShader();
-	}
-}
 

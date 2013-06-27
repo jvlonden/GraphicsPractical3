@@ -10,6 +10,7 @@ Jordy: Cook-Torrance/ frustrum culling and multiple lights(finished)
 
 Sources:
 spotlight: http://xboxforums.create.msdn.com/forums/p/3303/16481.aspx
+postprocessing: http://rbwhitaker.wikidot.com/post-processing-effects
 
 Included assigments:
 E1 Cook-Torrance
