@@ -154,7 +154,7 @@ namespace GraphicsPractical3
             this.quadIndices = new short[] { 0, 1, 2, 1, 2, 3 };
             this.quadTransform = Matrix.CreateScale(scale) * Matrix.CreateTranslation(0.0f, -9.0f, 0.0f);
         }
-
+        //turns the rendered scene into a texture for post processing
         private void DrawSceneToTexture(RenderTarget2D renderTarget)
         {
             // Set the render target
@@ -424,7 +424,7 @@ namespace GraphicsPractical3
             base.Update(gameTime);
 
         }
-
+        //method to draw all objects inthe scene
         private void DrawScene()
         {
             // Clear the screen in a predetermined color and clear the depth buffer
@@ -451,11 +451,12 @@ namespace GraphicsPractical3
         {
             DrawSceneToTexture(target);
 
+            //apply grayscale effect when grayscale toggle is on
             if (grayScale)
             {
                 postProcess.CurrentTechnique = postProcess.Techniques["Grayscale"];
             }
-            else
+            else//if not apply normal effect which does nothing
             {
                 postProcess.CurrentTechnique = postProcess.Techniques["normal"];
             }
