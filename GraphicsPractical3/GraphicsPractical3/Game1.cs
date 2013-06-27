@@ -92,7 +92,7 @@ namespace GraphicsPractical3
             //load postprocessing effect
             postProcess = this.Content.Load<Effect>("Effects/PostProcessing");
             currentTechniqueNumber = 0;
-            numberOfTechniques = 3;
+            numberOfTechniques = 2;
 
             // Load the model and let it use the "Simple" effect
             this.model = this.Content.Load<Model>("Models/femalehead");
@@ -302,14 +302,10 @@ namespace GraphicsPractical3
             switch (currentTechniqueNumber)
             {
                 case 0:
-                    effect.CurrentTechnique = effect.Techniques["Simple"];
-                    currentTechnique = "Cook-Torrance";
-                    break;
-                case 1:
                     effect.CurrentTechnique = effect.Techniques["Spotlight"];
                     currentTechnique = "Spotlight";
                     break;
-                case 2:
+                case 1:
                     effect.CurrentTechnique = effect.Techniques["MultipleLightsSources"];
                     currentTechnique = "Multiple Spotlights";
                     break;
@@ -470,7 +466,7 @@ namespace GraphicsPractical3
                 SamplerState.LinearClamp, DepthStencilState.Default,
                 RasterizerState.CullNone, postProcess);
 
-            spriteBatch.Draw(target, new Rectangle(0, 0, 800, 480), Color.White);
+            spriteBatch.Draw(target, new Rectangle(0, 0, 800, 600), Color.White);
 
             spriteBatch.End();
             base.Draw(gameTime);
